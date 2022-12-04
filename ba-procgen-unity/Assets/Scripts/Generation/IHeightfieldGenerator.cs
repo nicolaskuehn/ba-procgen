@@ -1,6 +1,6 @@
 namespace ProcGen.Generation
 {
-    interface HeightfieldGenerator
+    interface IHeightfieldGenerator
     {
         public float GetHeight();
     }

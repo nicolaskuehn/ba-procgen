@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace ProcGen.Generation
 {
-    public class DiamondSquareGenerator : HeightfieldGenerator
+    public class DiamondSquareGenerator : IHeightfieldGenerator
     {
         public float GetHeight()
         {

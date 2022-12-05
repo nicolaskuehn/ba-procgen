@@ -1,4 +1,5 @@
 using UnityEngine;
+using ProcGen.Settings;
 
 namespace ProcGen.Generation
 {
@@ -11,11 +12,6 @@ namespace ProcGen.Generation
         private MeshFilter meshFilter;
         private MeshRenderer meshRenderer;
 
-        // ... Settings ... //
-        // Determines the resolution (number of tiles/squares) of the mesh of the plane in x- and z-direction
-        [SerializeField, Range(2, 250), Tooltip("Resolution of the mesh in x- and z-direction")]
-        int resolution = 10;
-
         private void Awake()
         {
             // Initialize components
@@ -27,6 +23,9 @@ namespace ProcGen.Generation
         // Generates a 2D grid mesh of a plane
         public void GenerateMesh()
         {
+            // Get mesh resolution from SettingsManager
+            int resolution = SettingsManager.Instance.resolution;
+
             // Mesh data
             int vertexCount1D = resolution + 1;
             Vector3[] vertices = new Vector3[vertexCount1D * vertexCount1D];

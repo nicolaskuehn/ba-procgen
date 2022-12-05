@@ -1,17 +1,18 @@
 using UnityEngine;
 using UnityEditor;
+using ProcGen.Generation;
 
-namespace ProcGen.Generation
+namespace ProcGen.Settings
 {
-    [CustomEditor(typeof(MeshGenerator))]
-    public class MeshGeneratorEditor : Editor
+    [CustomEditor(typeof(SettingsManager))]
+    public class SettingsManagerEditor : Editor
     {
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
 
-            // Get script reference
-            MeshGenerator meshGenerator = (MeshGenerator) target;
+            // Get mesh generator from scene
+            MeshGenerator meshGenerator = (MeshGenerator)FindObjectOfType(typeof(MeshGenerator));
 
             // Only draw button in play mode
             if (!Application.isPlaying) return;

@@ -39,6 +39,9 @@ namespace ProcGen.Generation
                 {
                     vertexPos.x = x;
                     vertexPos.z = z;
+                    // Assign value of heightfield to y-position
+                    vertexPos.y = SettingsManager.Instance.HeightfieldGenerator.GetHeight(x, z);
+                    
                     vertices[z * vertexCount1D + x] = vertexPos;
                 }
             }

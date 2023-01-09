@@ -33,7 +33,7 @@ namespace ProcGen.Settings
             PerlinNoise = 1
         }
 
-        private readonly IHeightfieldGenerator[] heightfieldGenerators = 
+        private readonly HeightfieldGenerator[] heightfieldGenerators = 
         { 
             new DiamondSquareGenerator(), 
             new PerlinNoiseGenerator() 
@@ -43,7 +43,7 @@ namespace ProcGen.Settings
         [SerializeField]
         private HeightfieldGeneratorType heightfieldGenerator = HeightfieldGeneratorType.DiamondSquare;  // Default: Diamond-square algorithm
 
-        public IHeightfieldGenerator HeightfieldGenerator
+        public HeightfieldGenerator HeightfieldGenerator
         {
             get => heightfieldGenerators[(int)heightfieldGenerator];
             private set { }

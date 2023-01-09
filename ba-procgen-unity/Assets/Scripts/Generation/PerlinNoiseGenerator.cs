@@ -2,11 +2,11 @@ using UnityEngine;
 
 namespace ProcGen.Generation
 {
-    public class PerlinNoiseGenerator : IHeightfieldGenerator
+    public class PerlinNoiseGenerator : HeightfieldGenerator
     {
-        public float GetHeight(int x, int z)
+        public override float GetHeight(int x, int z)
         {
-            return Random.Range(0.0f, 2.0f); // TODO
+            return Random.Range(0.0f, 2.0f);
         }
     }
 }

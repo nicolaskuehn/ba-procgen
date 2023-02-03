@@ -21,32 +21,23 @@ namespace ProcGen.Settings
                 Instance = this;
         }
 
+        private void OnEnable()
+        {
+            Init();
+        }
+
+        public HeightfieldCompositor HeightfieldCompositor { get; private set; }
+
+        private void Init()
+        {
+            HeightfieldCompositor = new HeightfieldCompositor();
+            // Add one octave with diamond-square algorithm as generation method per default
+            HeightfieldCompositor.AddOctave(new Octave());
+        }
+
         // ... User Settings ... //
         // Determines the resolution (number of tiles/squares) of the mesh of the plane in x- and z-direction
         [SerializeField, Range(2, 250), Tooltip("Resolution of the mesh in x- and z-direction")]
-        public int resolution = 10; // TODO: split current resolution functionality in: resolution and size (currently size scales with resolution)
-
-        // Let's the user select a generation method for the heightfield
-        public enum HeightfieldGeneratorType
-        {
-            DiamondSquare = 0,
-            PerlinNoise = 1
-        }
-
-        private readonly HeightfieldGenerator[] heightfieldGenerators = 
-        { 
-            new DiamondSquareGenerator(), 
-            new PerlinNoiseGenerator() 
-        };
-
-        // Editor property
-        [SerializeField]
-        private HeightfieldGeneratorType heightfieldGenerator = HeightfieldGeneratorType.DiamondSquare;  // Default: Diamond-square algorithm
-
-        public HeightfieldGenerator HeightfieldGenerator
-        {
-            get => heightfieldGenerators[(int)heightfieldGenerator];
-            private set { }
-        }
+        public int resolution = 25; // TODO: split current resolution functionality in: resolution and size (currently size scales with resolution)
     }
 }

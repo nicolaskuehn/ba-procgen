@@ -1,14 +1,29 @@
 using ProcGen.Settings;
+using System;
 using System.Collections.Generic;
 
 namespace ProcGen.Generation
 {
     public abstract class HeightfieldGenerator
     {
-        public List<Setting> Settings { get; }
+        protected Random randomGenerator;
+        private int seed;
+        public int Seed 
+        { 
+            get => seed; 
+            set 
+            {
+                if (seed != value)
+                    randomGenerator = new Random(value);
+            } 
+        }
 
-        public HeightfieldGenerator()
+        public List<Setting> Settings { get; set; }
+
+        public HeightfieldGenerator(int seed = 42)
         {
+            Seed = seed;
+            
             Settings = new List<Setting>();
         }
 

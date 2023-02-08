@@ -27,6 +27,6 @@ namespace ProcGen.Generation
             Settings = new List<Setting>();
         }
 
-        public abstract float GetHeight(int x, int z);
+        public abstract float GetHeight(float x, float z);
     }
 }

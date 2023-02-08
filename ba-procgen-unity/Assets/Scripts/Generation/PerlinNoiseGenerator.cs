@@ -27,18 +27,18 @@ namespace ProcGen.Generation
         // Constructor
         public PerlinNoiseGenerator(int seed = 42) : base(seed)
         {
-            Settings.Add(new Setting("Amplitude", 1.0f));
-            Settings.Add(new Setting("Frequency", 1.0f));
+            Settings.Add(new Setting("Amplitude", 4.0f));
+            Settings.Add(new Setting("Frequency", 0.2f));
         }
 
-        public override float GetHeight(int x, int z)
+        public override float GetHeight(float x, float z)
         {
-            
+            float offsetY = (SettingsManager.Instance.offset - 1) / 2.0f;
 
-            return Mathf.PerlinNoise(
-                ((float) x / SettingsManager.Instance.resolution) * Frequency, 
-                ((float) z / SettingsManager.Instance.resolution) * Frequency
-            ) * Amplitude;
+            return (Mathf.PerlinNoise(
+                x * Frequency, 
+                z * Frequency
+            ) + offsetY)  * Amplitude;
         } 
     }
 }

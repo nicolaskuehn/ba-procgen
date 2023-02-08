@@ -24,33 +24,42 @@ namespace ProcGen.Generation
         public void GenerateMesh()
         {
             // Get mesh resolution from SettingsManager
-            int resolution = SettingsManager.Instance.resolution;
+            int size = SettingsManager.Instance.size;
+            int subdivisions = SettingsManager.Instance.subdivisions;
 
             // Mesh data
-            int vertexCount1D = resolution + 1;
+            int vertexCount1D = 1 << subdivisions + 1;
             Vector3[] vertices = new Vector3[vertexCount1D * vertexCount1D];
-            int[] triangles = new int[2 * resolution * resolution * 3];
+            int faceCount = vertexCount1D - 1;
+            int[] triangleIndices = new int[2 * faceCount * faceCount * 3];
+
+            // Factor used to position the vertices to match the given size
+            float sizeScalingFactor = (float)size / vertexCount1D;
 
             // Create vertices
             Vector3 vertexPos = Vector3.zero;
-            for(int z = 0; z < vertexCount1D; z++)
+            for(int j = 0; j < vertexCount1D; j++)
             {
-                for(int x = 0; x < vertexCount1D; x++)
+                for(int i = 0; i < vertexCount1D; i++)
                 {
+                    float x = i * sizeScalingFactor;
+                    float z = j * sizeScalingFactor;
+
                     vertexPos.x = x;
                     vertexPos.z = z;
                     // Assign value of heightfield to y-position
                     vertexPos.y = SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(x, z);
                     
-                    vertices[z * vertexCount1D + x] = vertexPos;
+                    vertices[j * vertexCount1D + i] = vertexPos;
                 }
             }
 
             // Create triangles (indices)
             int triangleIndex = 0;
-            for (int z = 0; z < resolution; z++)
+
+            for (int z = 0; z < faceCount; z++)
             {
-                for (int x = 0; x < resolution; x++)
+                for (int x = 0; x < faceCount; x++)
                 {
                     // Vertices of the current square 
                     int bl = z * vertexCount1D + x;                 // bottom left
@@ -59,14 +68,14 @@ namespace ProcGen.Generation
                     int br = z * vertexCount1D + x + 1;             // bottom right
 
                     // Lower left triangle
-                    triangles[triangleIndex] = bl;
-                    triangles[triangleIndex + 1] = tl;
-                    triangles[triangleIndex + 2] = br;
+                    triangleIndices[triangleIndex] = bl;
+                    triangleIndices[triangleIndex + 1] = tl;
+                    triangleIndices[triangleIndex + 2] = br;
 
                     // Upper right triangle
-                    triangles[triangleIndex + 3] = br;
-                    triangles[triangleIndex + 4] = tl;
-                    triangles[triangleIndex + 5] = tr;
+                    triangleIndices[triangleIndex + 3] = br;
+                    triangleIndices[triangleIndex + 4] = tl;
+                    triangleIndices[triangleIndex + 5] = tr;
 
                     triangleIndex += 6;
                 }
@@ -77,7 +86,7 @@ namespace ProcGen.Generation
             {
                 // Assign vertices and triangles data to mesh
                 vertices = vertices,
-                triangles = triangles
+                triangles = triangleIndices
             };
 
             // Recalculate normals and tangents to ensure correct shading

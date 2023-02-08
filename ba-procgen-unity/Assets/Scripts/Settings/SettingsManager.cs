@@ -36,8 +36,16 @@ namespace ProcGen.Settings
         }
 
         // ... User Settings ... //
-        // Determines the resolution (number of tiles/squares) of the mesh of the plane in x- and z-direction
-        [SerializeField, Range(2, 250), Tooltip("Resolution of the mesh in x- and z-direction")]
-        public int resolution = 25; // TODO: split current resolution functionality in: resolution and size (currently size scales with resolution)
+        // Determines the size (number of tiles/squares) of the mesh of the plane in x- and z-direction
+        [SerializeField, Range(2, 100), Tooltip("Size of the mesh in x- and z-direction (in whole units)")]
+        public int size = 32;
+
+        // Determines the resolution (subdivisions of tiles/squares) of the mesh of the plane in x- and z-direction
+        [SerializeField, Range(1, 7), Tooltip("Resolution of the mesh in x- and z-direction (per unit)")]
+        public int subdivisions = 6;
+
+        // Determines the offset in y-direction
+        [SerializeField, Range(-1, 1), Tooltip("Offset in y-direction (height). 0 corresponds to a centered height distribution.")]
+        public float offset = 0;
     }
 }

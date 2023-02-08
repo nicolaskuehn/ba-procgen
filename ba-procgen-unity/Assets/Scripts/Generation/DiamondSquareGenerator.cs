@@ -19,7 +19,7 @@ namespace ProcGen.Generation
             Settings.Add(new Setting("Iterations", iterations));
         }
 
-        public override float GetHeight(int x, int z)
+        public override float GetHeight(float x, float z)
         {
             return randomGenerator.Next(100) / 100.0f * 2.0f;
             // return Random.Range(0.0f, 10.0f); // TODO

@@ -16,7 +16,7 @@ namespace ProcGen.Generation
             Octaves.Remove(octave);
         }
 
-        public float GetComposedHeight(int x, int z)
+        public float GetComposedHeight(float x, float z)
         {
             float composedHeight = 0.0f;
 

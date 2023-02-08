@@ -56,7 +56,7 @@ namespace ProcGen.Generation
         public HeightfieldGenerator HeightfieldGenerator { get; private set; }
 
         // Constructor
-        public Octave(EGenerationMethod method = EGenerationMethod.DiamondSquare)
+        public Octave(EGenerationMethod method = EGenerationMethod.PerlinNoise) // TODO: Change standard to diamond-square when implemented
         {
             id = Guid.NewGuid();
             GenerationMethod = method;

@@ -19,9 +19,6 @@ namespace ProcGen.Settings
             // Get mesh generator from scene
             MeshGenerator meshGenerator = (MeshGenerator)FindObjectOfType(typeof(MeshGenerator));
 
-            // Only draw settings in play mode
-            if (!Application.isPlaying) return;
-
             // ... Noise Settings ... //
             UpdateNoiseSettings();
 
@@ -49,7 +46,6 @@ namespace ProcGen.Settings
 
             // Octaves
             DrawOctaveSettings();
-
 
             // "Add octave" button
             if (GUILayout.Button("[+]   Add octave"))
@@ -105,16 +101,6 @@ namespace ProcGen.Settings
 
                 // Separator line
                 EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-
-                /*
-                foreach(Octave octave in SettingsManager.Instance.HeightfieldCompositor.Octaves)
-                {
-                    foreach(Setting setting in octave.HeightfieldGenerator.Settings)
-                    {
-                        Debug.Log($"{octave.id} | {setting.Name}: {setting.Value}");
-                    }
-                }
-                */
             }
         }
     }

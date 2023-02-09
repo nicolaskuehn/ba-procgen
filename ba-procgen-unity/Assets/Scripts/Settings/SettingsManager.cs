@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections.Generic;
 using ProcGen.Generation;
 
 namespace ProcGen.Settings
@@ -7,14 +6,19 @@ namespace ProcGen.Settings
     public sealed class SettingsManager : MonoBehaviour
     {
         // Singleton setup (not thread-safe)
-        public static SettingsManager Instance { get; private set; }
+        private static SettingsManager instance;
+        public static SettingsManager Instance
+        {
+            get => instance = instance != null ? instance : FindAnyObjectByType<SettingsManager>()?.Init();
+            private set => instance = value;
+        }
         private SettingsManager() { }
 
         private void Awake()
         {
             if (Instance != null && Instance != this)
             {
-                Destroy(this.gameObject);
+                Destroy(gameObject);
                 Debug.LogError("Destroyed duplicate instance of SettingsManager (Singleton)!");
             }
             else
@@ -28,11 +32,14 @@ namespace ProcGen.Settings
 
         public HeightfieldCompositor HeightfieldCompositor { get; private set; }
 
-        private void Init()
+        // Returns the initialized SettingsManager instance
+        private SettingsManager Init()
         {
             HeightfieldCompositor = new HeightfieldCompositor();
             // Add one octave with diamond-square algorithm as generation method per default
             HeightfieldCompositor.AddOctave(new Octave());
+
+            return this;
         }
 
         // ... User Settings ... //

@@ -8,17 +8,23 @@ namespace ProcGen.Generation
     {
         // ... Components ... //
         private Mesh mesh;
-        private Material meshMaterial;
-        private MeshFilter meshFilter;
-        private MeshRenderer meshRenderer;
+        private Material _meshMaterial;
+        private Material meshMaterial 
+            => _meshMaterial == null 
+            ? (_meshMaterial = new Material(Shader.Find("Legacy Shaders/Diffuse"))) 
+            : _meshMaterial;
+       
+        private MeshFilter _meshFilter;
+        private MeshFilter meshFilter 
+            => _meshFilter == null
+            ? (_meshFilter = GetComponent<MeshFilter>())
+            : _meshFilter;
 
-        private void Awake()
-        {
-            // Initialize components
-            meshMaterial = new Material(Shader.Find("Legacy Shaders/Diffuse"));
-            meshFilter = GetComponent<MeshFilter>();
-            meshRenderer = GetComponent<MeshRenderer>();
-        }
+        private MeshRenderer _meshRenderer;
+        private MeshRenderer meshRenderer
+            => _meshRenderer == null
+            ? (_meshRenderer = GetComponent<MeshRenderer>())
+            : _meshRenderer;
 
         // Generates a 2D grid mesh of a plane
         public void GenerateMesh()

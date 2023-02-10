@@ -41,7 +41,16 @@ namespace ProcGen.Generation
                             break;
                     }
 
-                    float normalizedHeight = MathUtils.Map(minHeight, maxHeight, 0.0f, 1.0f, octave.HeightfieldGenerator.GetHeight(x, y));
+                    float normalizedHeight = MathUtils.Map(
+                        minHeight, 
+                        maxHeight, 
+                        0.0f, 
+                        1.0f, 
+                        octave.HeightfieldGenerator.GetHeight(
+                            x * SettingsManager.Instance.size / width, 
+                            y * SettingsManager.Instance.size / height
+                        )
+                    );
 
                     // Write normalized height field (range [0, 1]) value into the texture as rgba value 
                     col.r = col.g = col.b = normalizedHeight;

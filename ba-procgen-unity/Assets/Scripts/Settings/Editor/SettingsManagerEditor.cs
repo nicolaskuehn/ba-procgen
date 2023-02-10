@@ -22,6 +22,14 @@ namespace ProcGen.Settings
         // Variables
         private bool inited = false;
 
+        public void OnEnable()
+        {
+            // Attach event listener to each setting of the default octave
+            Octave defaultOctave = SettingsManager.Instance.HeightfieldCompositor.Octaves[0];
+            foreach (Setting setting in defaultOctave.HeightfieldGenerator.Settings)
+                setting.valueChanged.AddListener(delegate { UpdateOctave(defaultOctave); });
+        }
+
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
@@ -29,14 +37,6 @@ namespace ProcGen.Settings
             // Get mesh generator from scene (when not already assigned)
             if (meshGenerator == null)
                 meshGenerator = (MeshGenerator)FindObjectOfType(typeof(MeshGenerator));
-
-            // Attach event listener to each setting of the default octave
-            if (!inited)
-            {
-                Octave defaultOctave = SettingsManager.Instance.HeightfieldCompositor.Octaves[0];
-                foreach (Setting setting in defaultOctave.HeightfieldGenerator.Settings)
-                    setting.valueChanged.AddListener(delegate { UpdateOctave(defaultOctave); });
-            }
 
             // ... Noise Settings ... //
 
@@ -66,9 +66,6 @@ namespace ProcGen.Settings
                     meshGenerator.GenerateMesh();
                 }
             }
-
-            if (inited == false)
-                inited = true;
         }
 
         public void UpdateNoiseSettings()
@@ -127,9 +124,9 @@ namespace ProcGen.Settings
                     
                     // Display numbers as sliders and string as input field
                     if (setting.Type == typeof(int))    // TODO: use isnumeric instead (to catch float, double etc. aswell) --> switch-case?
-                        setting.Value = EditorGUILayout.IntSlider(setting.Name, (int)setting.Value, 0, 20); // TODO: Assignment necessary? How to define range?
+                        setting.Value = EditorGUILayout.IntSlider(setting.Name, (int)setting.Value, (int) setting.MinValue, (int) setting.MaxValue);
                     else if (setting.Type == typeof(float))
-                        setting.Value = EditorGUILayout.Slider(setting.Name, (float)setting.Value, 0, 20.0f);
+                        setting.Value = EditorGUILayout.Slider(setting.Name, (float)setting.Value, (float) setting.MinValue, (float) setting.MaxValue);
                     else if (setting.Type == typeof(string))
                     {
                         setting.Value = EditorGUILayout.TextField(setting.Name, setting.Value.ToString());
@@ -158,10 +155,9 @@ namespace ProcGen.Settings
             if (!octaveTextures.ContainsKey(octave.id))
                 // Generate new texture and add it to the dictionary
                 octaveTextures.Add(octave.id, TextureGenerator.GenerateTextureMap(NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, octave));
-            else
-                // Re-generate texture of correspondinn octave
-                octaveTextures[octave.id] = TextureGenerator.GenerateTextureMap(NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, octave);
-        }
+                    else
+                        // Re-generate texture of correspondinn octave
+                        octaveTextures[octave.id] = TextureGenerator.GenerateTextureMap(NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, octave);        }
 
         private void UpdateOctaveTextures()
         {

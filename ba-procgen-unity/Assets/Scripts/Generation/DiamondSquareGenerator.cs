@@ -1,5 +1,3 @@
-using UnityEngine;
-
 using ProcGen.Settings;
 
 namespace ProcGen.Generation
@@ -15,8 +13,8 @@ namespace ProcGen.Generation
         public DiamondSquareGenerator(int seed = 42) : base(seed)
         {
             // Add default settings
-            Settings.Add(new Setting("Grid size", gridSize));
-            Settings.Add(new Setting("Iterations", iterations));
+            Settings.Add(new Setting("Grid size", gridSize, 1, 5));
+            Settings.Add(new Setting("Iterations", iterations, 1, 4));
         }
 
         public override float GetHeight(float x, float z)

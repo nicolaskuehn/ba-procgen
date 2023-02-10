@@ -40,11 +40,18 @@ namespace ProcGen.Settings
             get => Value.GetType();
         }
 
+        public object MinValue { get; private set; }
+        public object MaxValue { get; private set; }
+
+
         // ... Constructors ... //
-        public Setting(string name, object value)
+        public Setting(string name, object value, object minValue = null, object maxValue = null)
         {
             Name = name;
             Value = value;
+
+            MinValue = minValue;
+            MaxValue = maxValue;
         }
     }
 }

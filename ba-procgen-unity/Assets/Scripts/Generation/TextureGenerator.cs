@@ -1,28 +1,56 @@
-using System.Collections;
-using System.Collections.Generic;
+using ProcGen.Settings;
+using ProcGen.Utils;
 using UnityEngine;
 
 namespace ProcGen.Generation
 {
-    public class TextureGenerator : MonoBehaviour
+    public static class TextureGenerator
     {
-        public Texture2D GenerateTextureMap(float[][] valueMap)
+        public static Texture2D GenerateTextureMap(int width, int height, Octave octave)
         {
-            // Create texture to write value map to
-            int width, height;
-            width = valueMap.GetLength(0);
-            height = valueMap.GetLength(1);
-
+            // Create texture
             Texture2D tex = new Texture2D(width, height);
 
             // Loop over all pixels
+            Color col = new Color(0.0f, 0.0f, 0.0f, 1.0f);  // values between 0-1!
+
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    // TODO
+                    // Normalize height value to be in range [0, 1]
+                    
+                    float minHeight = 0.0f;
+                    float maxHeight = 0.0f;
+
+                    // Calculate min and max height dependant on the heightfield generation method
+                    switch(octave.GenerationMethod)
+                    {
+                        case Octave.EGenerationMethod.DiamondSquare:
+                            // TODO
+                            Debug.LogError("2D texture generation is not implemented for EGenerationMethod.DiamondSquare right now!");
+                            break;
+                        case Octave.EGenerationMethod.PerlinNoise:
+                            float absMinMaxHeight = Mathf.Sqrt(0.5f); // Generally [-sqrt(N/4), sqrt(N/4)], N beeing the number of dimensions
+                            float amplitude = ((PerlinNoiseGenerator)octave.HeightfieldGenerator).Amplitude;
+                            minHeight = (-absMinMaxHeight + SettingsManager.Instance.offset) * amplitude;
+                            maxHeight = (absMinMaxHeight + SettingsManager.Instance.offset) * amplitude;
+                            break;
+                        default:
+                            Debug.LogError("2D texture generation is not implemented for this generation method!");
+                            break;
+                    }
+
+                    float normalizedHeight = MathUtils.Map(minHeight, maxHeight, 0.0f, 1.0f, octave.HeightfieldGenerator.GetHeight(x, y));
+
+                    // Write normalized height field (range [0, 1]) value into the texture as rgba value 
+                    col.r = col.g = col.b = normalizedHeight;
+                    tex.SetPixel(x, y, col);
                 }
             }
+
+            // Apply the changes (setting of pixel color's)
+            tex.Apply();
 
             return tex;
         }

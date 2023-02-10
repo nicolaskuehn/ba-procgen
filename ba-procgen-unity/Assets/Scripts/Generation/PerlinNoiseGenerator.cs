@@ -6,19 +6,19 @@ namespace ProcGen.Generation
     public class PerlinNoiseGenerator : HeightfieldGenerator
     {
         // Settings
-        private float Amplitude 
+        public float Amplitude 
         {
             get => (float)Settings.Find(s => s.Name == "Amplitude").Value;
-            set
+            private set
             {
                 Settings.Find(s => s.Name == "Amplitude").Value = value;
             }
         }
 
-        private float Frequency
+        public float Frequency
         {
             get => (float)Settings.Find(s => s.Name == "Frequency").Value;
-            set
+            private set
             {
                 Settings.Find(s => s.Name == "Frequency").Value = value;
             }

@@ -1,4 +1,7 @@
+using ProcGen.Generation;
 using System;
+using UnityEngine;
+using UnityEngine.Events;
 
 namespace ProcGen.Settings
 {
@@ -12,13 +15,25 @@ namespace ProcGen.Settings
             set
             {
                 if (value == null)
-                    this.name = $"Setting #{this.GetHashCode().ToString()}";
+                    name = $"Setting #{GetHashCode()}";
                 else
                     name = value;
             }
         }
 
-        public object Value { get; set; }
+        public UnityEvent valueChanged = new UnityEvent();
+        private object _value;
+        public object Value 
+        {
+            get => _value;
+            set
+            {
+                if (_value != null && !_value.Equals(value))
+                    valueChanged.Invoke();
+                
+                _value = value;
+            } 
+        }
 
         public Type Type
         {
@@ -31,7 +46,5 @@ namespace ProcGen.Settings
             Name = name;
             Value = value;
         }
-
-
     }
 }

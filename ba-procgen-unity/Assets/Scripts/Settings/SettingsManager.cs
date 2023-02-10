@@ -43,6 +43,7 @@ namespace ProcGen.Settings
         }
 
         // ... User Settings ... //
+        [Header("Mesh Settings")]
         // Determines the size (number of tiles/squares) of the mesh of the plane in x- and z-direction
         [SerializeField, Range(2, 100), Tooltip("Size of the mesh in x- and z-direction (in whole units)")]
         public int size = 32;
@@ -54,5 +55,8 @@ namespace ProcGen.Settings
         // Determines the offset in y-direction
         [SerializeField, Range(-1, 1), Tooltip("Offset in y-direction (height). 0 corresponds to a centered height distribution.")]
         public float offset = 0;
+
+        [SerializeField, Tooltip("Determines if the mesh updates automatically with every change in the settings menu")]
+        public bool autoUpdate = false;
     }
 }

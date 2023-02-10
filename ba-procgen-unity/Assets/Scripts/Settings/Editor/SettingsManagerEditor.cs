@@ -11,32 +11,64 @@ namespace ProcGen.Settings
     {
         // Key: Octave Number (int), Value: Generation Method (Octave.EGenerationMethod)
         private Dictionary<Guid, Octave.EGenerationMethod> octaveGenerationMethods = new Dictionary<Guid, Octave.EGenerationMethod>();
+        private Dictionary<Guid, Texture2D> octaveTextures = new Dictionary<Guid, Texture2D>();
+
+        // Constants
+        private static int NOISE_TEXTURE_SIZE = 200;
+
+        // Scene objects
+        MeshGenerator meshGenerator;
+
+        // Variables
+        private bool inited = false;
 
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
 
-            // Get mesh generator from scene
-            MeshGenerator meshGenerator = (MeshGenerator)FindObjectOfType(typeof(MeshGenerator));
+            // Get mesh generator from scene (when not already assigned)
+            if (meshGenerator == null)
+                meshGenerator = (MeshGenerator)FindObjectOfType(typeof(MeshGenerator));
+
+            // Attach event listener to each setting of the default octave
+            if (!inited)
+            {
+                Octave defaultOctave = SettingsManager.Instance.HeightfieldCompositor.Octaves[0];
+                foreach (Setting setting in defaultOctave.HeightfieldGenerator.Settings)
+                    setting.valueChanged.AddListener(delegate { UpdateOctave(defaultOctave); });
+            }
 
             // ... Noise Settings ... //
+
+            // Octave Textures
+            if (octaveTextures.Count == 0)
+                UpdateOctaveTextures();
+
+            // Settings
             UpdateNoiseSettings();
+
 
             // ... Mesh Settings ... //
 
             // Draw heading
             EditorGUILayout.LabelField("Mesh Settings", EditorStyles.boldLabel);
 
-            // Build button for generating the mesh
-            if (GUILayout.Button("Generate Mesh"))
+            // Build button for generating the mesh (only if auto-update is disabled)
+            if (!SettingsManager.Instance.autoUpdate)
             {
-                // Update generation methods of octaves
-                foreach (Octave octave in SettingsManager.Instance.HeightfieldCompositor.Octaves)
-                    octave.GenerationMethod = octaveGenerationMethods[octave.id];
+                if (GUILayout.Button("Generate Mesh"))
+                {
+                    // Update generation methods of octaves
+                    foreach (Octave octave in SettingsManager.Instance.HeightfieldCompositor.Octaves)
+                        octave.GenerationMethod = octaveGenerationMethods[octave.id];
 
-                // Generate mesh
-                meshGenerator.GenerateMesh();
+                    // Generate mesh
+                    meshGenerator.GenerateMesh();
+                }
             }
+
+            if (inited == false)
+                inited = true;
         }
 
         public void UpdateNoiseSettings()
@@ -50,8 +82,13 @@ namespace ProcGen.Settings
             // "Add octave" button
             if (GUILayout.Button("[+]   Add octave"))
             {
-                SettingsManager.Instance.HeightfieldCompositor.AddOctave(new Octave());
-                DrawOctaveSettings();
+                Octave octave = new Octave();
+                SettingsManager.Instance.HeightfieldCompositor.AddOctave(octave);
+                
+                foreach(Setting setting in octave.HeightfieldGenerator.Settings)
+                    setting.valueChanged.AddListener(delegate { UpdateOctave(octave); });
+
+                UpdateOctave(octave);
             }
         }
 
@@ -99,9 +136,46 @@ namespace ProcGen.Settings
                     }
                 }
 
+
+
+                // Draw 2D noise texture of the generated noise as preview
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.Space();
+                if (octaveTextures.ContainsKey(currentOctave.id))
+                    GUILayout.Box(octaveTextures[currentOctave.id]);
+                else
+                    Debug.LogError($"Texture for octave with id {currentOctave.id} could not be found.");
+                EditorGUILayout.Space();
+                EditorGUILayout.EndHorizontal();
+
                 // Separator line
                 EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
             }
+        }
+
+        private void UpdateOctaveTexture(Octave octave)
+        {
+            if (!octaveTextures.ContainsKey(octave.id))
+                // Generate new texture and add it to the dictionary
+                octaveTextures.Add(octave.id, TextureGenerator.GenerateTextureMap(NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, octave));
+            else
+                // Re-generate texture of correspondinn octave
+                octaveTextures[octave.id] = TextureGenerator.GenerateTextureMap(NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, octave);
+        }
+
+        private void UpdateOctaveTextures()
+        {
+            foreach (Octave octave in SettingsManager.Instance.HeightfieldCompositor.Octaves)
+                UpdateOctaveTexture(octave);
+        }
+
+        private void UpdateOctave(Octave octave)
+        {
+            UpdateOctaveTexture(octave);
+            DrawOctaveSettings();
+
+            if (SettingsManager.Instance.autoUpdate)
+                meshGenerator.GenerateMesh();
         }
     }
 }

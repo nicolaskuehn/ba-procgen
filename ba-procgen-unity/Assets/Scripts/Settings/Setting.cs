@@ -1,6 +1,4 @@
-using ProcGen.Generation;
 using System;
-using UnityEngine;
 using UnityEngine.Events;
 
 namespace ProcGen.Settings

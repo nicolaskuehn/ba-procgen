@@ -33,7 +33,7 @@ namespace ProcGen.Generation
 
         public override float GetHeight(float x, float z)
         {
-            float offsetY = (SettingsManager.Instance.offset - 1) / 2.0f;
+            float offsetY = (SettingsManager.Instance.MeshSettings.offset - 1) / 2.0f;
 
             return (Mathf.PerlinNoise(
                 x * Frequency, 

@@ -33,8 +33,8 @@ namespace ProcGen.Generation
                         case Octave.EGenerationMethod.PerlinNoise:
                             float absMinMaxHeight = Mathf.Sqrt(0.5f); // Generally [-sqrt(N/4), sqrt(N/4)], N beeing the number of dimensions
                             float amplitude = ((PerlinNoiseGenerator)octave.HeightfieldGenerator).Amplitude;
-                            minHeight = (-absMinMaxHeight + SettingsManager.Instance.offset) * amplitude;
-                            maxHeight = (absMinMaxHeight + SettingsManager.Instance.offset) * amplitude;
+                            minHeight = (-absMinMaxHeight + SettingsManager.Instance.MeshSettings.offset) * amplitude;
+                            maxHeight = (absMinMaxHeight + SettingsManager.Instance.MeshSettings.offset) * amplitude;
                             break;
                         default:
                             Debug.LogError("2D texture generation is not implemented for this generation method!");
@@ -47,8 +47,8 @@ namespace ProcGen.Generation
                         0.0f, 
                         1.0f, 
                         octave.HeightfieldGenerator.GetHeight(
-                            x * SettingsManager.Instance.size / width, 
-                            y * SettingsManager.Instance.size / height
+                            x * SettingsManager.Instance.MeshSettings.size / width, 
+                            y * SettingsManager.Instance.MeshSettings.size / height
                         )
                     );
 

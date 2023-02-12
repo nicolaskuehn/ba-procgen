@@ -30,8 +30,8 @@ namespace ProcGen.Generation
         public void GenerateMesh()
         {
             // Get mesh resolution from SettingsManager
-            int size = SettingsManager.Instance.size;
-            int subdivisions = SettingsManager.Instance.subdivisions;
+            int size = SettingsManager.Instance.MeshSettings.size;
+            int subdivisions = SettingsManager.Instance.MeshSettings.subdivisions;
 
             // Mesh data
             int vertexCount1D = 1 << subdivisions + 1;

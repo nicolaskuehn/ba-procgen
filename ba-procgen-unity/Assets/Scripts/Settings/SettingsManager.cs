@@ -43,20 +43,49 @@ namespace ProcGen.Settings
         }
 
         // ... User Settings ... //
+
+        // TODO: Use new class -> [Serializable] MeshSettings and SerializedProperties instead of simple variables (to access these in SettingsManagerEditor)
+
+        [SerializeField]
+        private MeshSettings meshSettings;
+        public MeshSettings MeshSettings => meshSettings;
+
+        /*
         [Header("Mesh Settings")]
         // Determines the size (number of tiles/squares) of the mesh of the plane in x- and z-direction
-        [SerializeField, Range(2, 100), Tooltip("Size of the mesh in x- and z-direction (in whole units)")]
+        [Range(2, 100), Tooltip("Size of the mesh in x- and z-direction (in whole units)")]
         public int size = 32;
 
         // Determines the resolution (subdivisions of tiles/squares) of the mesh of the plane in x- and z-direction
-        [SerializeField, Range(1, 7), Tooltip("Resolution of the mesh in x- and z-direction (per unit)")]
+        [Range(1, 7), Tooltip("Resolution of the mesh in x- and z-direction (per unit)")]
         public int subdivisions = 6;
 
         // Determines the offset in y-direction
-        [SerializeField, Range(-1, 1), Tooltip("Offset in y-direction (height). 0 corresponds to a centered height distribution.")]
+        [Range(-1, 1), Tooltip("Offset in y-direction (height). 0 corresponds to a centered height distribution.")]
         public float offset = 0;
 
-        [SerializeField, Tooltip("Determines if the mesh updates automatically with every change in the settings menu")]
+        [Tooltip("Determines if the mesh updates automatically with every change in the settings menu")]
         public bool autoUpdate = false;
+        */
     }
+
+    [System.Serializable]
+    public class MeshSettings
+    {
+        // Determines the size (number of tiles/squares) of the mesh of the plane in x- and z-direction
+        //[Range(2, 100), Tooltip("Size of the mesh in x- and z-direction (in whole units)")]
+        public int size = 32;
+
+        // Determines the resolution (subdivisions of tiles/squares) of the mesh of the plane in x- and z-direction
+        //[Range(1, 7), Tooltip("Resolution of the mesh in x- and z-direction (per unit)")]
+        public int subdivisions = 6;
+
+        // Determines the offset in y-direction
+        //[Range(-1, 1), Tooltip("Offset in y-direction (height). 0 corresponds to a centered height distribution.")]
+        public float offset = 0;
+
+        //[Tooltip("Determines if the mesh updates automatically with every change in the settings menu")]
+        public bool autoUpdate = false;
+    } 
+
 }

@@ -19,9 +19,6 @@ namespace ProcGen.Settings
         // Scene objects
         MeshGenerator meshGenerator;
 
-        // Variables
-        private bool inited = false;
-
         public void OnEnable()
         {
             // Attach event listener to each setting of the default octave
@@ -32,40 +29,13 @@ namespace ProcGen.Settings
 
         public override void OnInspectorGUI()
         {
-            DrawDefaultInspector();
+            // DrawDefaultInspector();
 
             // Get mesh generator from scene (when not already assigned)
             if (meshGenerator == null)
                 meshGenerator = (MeshGenerator)FindObjectOfType(typeof(MeshGenerator));
 
-            // ... Noise Settings ... //
-
-            // Octave Textures
-            if (octaveTextures.Count == 0)
-                UpdateOctaveTextures();
-
-            // Settings
-            UpdateNoiseSettings();
-
-
-            // ... Mesh Settings ... //
-
-            // Draw heading
-            EditorGUILayout.LabelField("Mesh Settings", EditorStyles.boldLabel);
-
-            // Build button for generating the mesh (only if auto-update is disabled)
-            if (!SettingsManager.Instance.autoUpdate)
-            {
-                if (GUILayout.Button("Generate Mesh"))
-                {
-                    // Update generation methods of octaves
-                    foreach (Octave octave in SettingsManager.Instance.HeightfieldCompositor.Octaves)
-                        octave.GenerationMethod = octaveGenerationMethods[octave.id];
-
-                    // Generate mesh
-                    meshGenerator.GenerateMesh();
-                }
-            }
+            DrawEditor();
         }
 
         public void UpdateNoiseSettings()
@@ -170,8 +140,79 @@ namespace ProcGen.Settings
             UpdateOctaveTexture(octave);
             DrawOctaveSettings();
 
-            if (SettingsManager.Instance.autoUpdate)
+            if (SettingsManager.Instance.MeshSettings.autoUpdate)
                 meshGenerator.GenerateMesh();
+        }
+
+        private void DrawMeshSettings()
+        {
+            // Draw heading
+            EditorGUILayout.LabelField("Mesh Settings", EditorStyles.boldLabel);
+
+            // TODO: Refactor - Iterate over all mesh settings dynamically
+            int origSize = SettingsManager.Instance.MeshSettings.size;
+            SettingsManager.Instance.MeshSettings.size = EditorGUILayout.IntSlider("Size", SettingsManager.Instance.MeshSettings.size, 2, 100);
+
+            int origSubdivisions = SettingsManager.Instance.MeshSettings.subdivisions;
+            SettingsManager.Instance.MeshSettings.subdivisions = EditorGUILayout.IntSlider("Subdivisions", SettingsManager.Instance.MeshSettings.subdivisions, 1, 7);
+
+            float origOffset = SettingsManager.Instance.MeshSettings.offset;
+            SettingsManager.Instance.MeshSettings.offset = EditorGUILayout.Slider("Size", SettingsManager.Instance.MeshSettings.offset, -1.0f, 1.0f);
+
+            bool origAutoUpdate = SettingsManager.Instance.MeshSettings.autoUpdate;
+            SettingsManager.Instance.MeshSettings.autoUpdate = EditorGUILayout.Toggle("Auto-Update", SettingsManager.Instance.MeshSettings.autoUpdate);
+
+            // Check if values have changed to update mesh automatically (only if auto-update is enabled)
+            if (SettingsManager.Instance.MeshSettings.autoUpdate)
+            {
+                bool updateMesh = false;
+
+                if (origSize != SettingsManager.Instance.MeshSettings.size
+                    || origSubdivisions != SettingsManager.Instance.MeshSettings.subdivisions
+                    || origOffset != SettingsManager.Instance.MeshSettings.offset
+                )
+                    updateMesh = true;
+
+                if (!origAutoUpdate)
+                    updateMesh = true;
+
+                // Update mesh if required
+                if (updateMesh)
+                    meshGenerator.GenerateMesh();
+            }
+
+            // Build button for generating the mesh (only if auto-update is disabled)
+            if (!SettingsManager.Instance.MeshSettings.autoUpdate)
+            {
+                if (GUILayout.Button("Generate Mesh"))
+                {
+                    // Update generation methods of octaves
+                    foreach (Octave octave in SettingsManager.Instance.HeightfieldCompositor.Octaves)
+                        octave.GenerationMethod = octaveGenerationMethods[octave.id];
+
+                    // Generate mesh
+                    meshGenerator.GenerateMesh();
+                }
+            }
+        }
+
+        private void DrawEditor()
+        {
+            // ... Mesh Settings ... //
+            DrawMeshSettings();
+
+
+            // ... Space ... //
+            EditorGUILayout.Space();
+
+
+            // ... Noise Settings ... //
+            // Octave Textures
+            if (octaveTextures.Count == 0)
+                UpdateOctaveTextures();
+
+            // Settings
+            UpdateNoiseSettings();
         }
     }
 }

@@ -3,31 +3,85 @@ using ProcGen.Settings;
 
 namespace ProcGen.Generation
 {
-    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class MeshGenerator : MonoBehaviour
     {
         // ... Components ... //
-        private Mesh mesh;
-        private Material _meshMaterial;
-        private Material meshMaterial 
-            => _meshMaterial == null 
-            ? (_meshMaterial = new Material(Shader.Find("Legacy Shaders/Diffuse"))) 
-            : _meshMaterial;
-       
-        private MeshFilter _meshFilter;
-        private MeshFilter meshFilter 
-            => _meshFilter == null
-            ? (_meshFilter = GetComponent<MeshFilter>())
-            : _meshFilter;
 
-        private MeshRenderer _meshRenderer;
-        private MeshRenderer meshRenderer
-            => _meshRenderer == null
-            ? (_meshRenderer = GetComponent<MeshRenderer>())
-            : _meshRenderer;
+        // Terrain
+        private GameObject terrainGO;
+
+        private Mesh terrainMesh;
+        private Material _terrainMeshMaterial;
+        private Material terrainMeshMaterial 
+            => _terrainMeshMaterial == null 
+            ? (_terrainMeshMaterial = new Material(Shader.Find("Standard"))) 
+            : _terrainMeshMaterial;
+       
+        private MeshFilter _terrainMeshFilter;
+        private MeshFilter terrainMeshFilter 
+            => _terrainMeshFilter == null
+            ? (_terrainMeshFilter = terrainGO.GetComponent<MeshFilter>())
+            : _terrainMeshFilter;
+
+        private MeshRenderer _terrainMeshRenderer;
+        private MeshRenderer terrainMeshRenderer
+            => _terrainMeshRenderer == null
+            ? (_terrainMeshRenderer = terrainGO.GetComponent<MeshRenderer>())
+            : _terrainMeshRenderer;
+
+
+        // Water
+        private GameObject waterGO;
+
+        private Mesh waterMesh;
+        [SerializeField]
+        private Material waterMeshMaterial;
+
+        private MeshFilter _waterMeshFilter;
+        private MeshFilter waterMeshFilter
+            => _waterMeshFilter == null
+            ? (_waterMeshFilter = waterGO.GetComponent<MeshFilter>())
+            : _waterMeshFilter;
+
+        private MeshRenderer _waterMeshRenderer;
+        private MeshRenderer waterMeshRenderer
+            => _waterMeshRenderer == null
+            ? (_waterMeshRenderer = waterGO.GetComponent<MeshRenderer>())
+            : _waterMeshRenderer;
+
+        private void Awake()
+        {
+            Init();
+        }
+
+        public void Init()
+        {
+            // ... Init child game objects that hold the different meshes ... //
+            // Terrain
+            if (terrainGO == null)
+            {
+                terrainGO = new GameObject("Terrain");
+
+                terrainGO.AddComponent<MeshFilter>();
+                terrainGO.AddComponent<MeshRenderer>();
+                
+                terrainGO.transform.parent = transform;
+            }
+
+            // Water
+            if (waterGO == null)
+            {
+                waterGO = new GameObject("Water");
+
+                waterGO.AddComponent<MeshFilter>();
+                waterGO.AddComponent<MeshRenderer>();
+
+                waterGO.transform.parent = transform;
+            }
+        }
 
         // Generates a 2D grid mesh of a plane
-        public void GenerateMesh()
+        public void GenerateTerrainMesh()
         {
             // Get mesh resolution from SettingsManager
             int size = SettingsManager.Instance.MeshSettings.size;
@@ -88,7 +142,7 @@ namespace ProcGen.Generation
             }
 
             // Create new mesh
-            mesh = new Mesh
+            terrainMesh = new Mesh
             {
                 // Assign vertices and triangles data to mesh
                 vertices = vertices,
@@ -96,14 +150,56 @@ namespace ProcGen.Generation
             };
 
             // Recalculate normals and tangents to ensure correct shading
-            mesh.RecalculateNormals();
-            mesh.RecalculateTangents();
+            terrainMesh.RecalculateNormals();
+            terrainMesh.RecalculateTangents();
 
             // Assign mesh to mesh filter
-            meshFilter.sharedMesh = mesh;
+            terrainMeshFilter.sharedMesh = terrainMesh;
 
             // Assign material to mesh renderer
-            meshRenderer.material = meshMaterial;
+            terrainMeshRenderer.material = terrainMeshMaterial;
+        }
+
+        public void GenerateWaterMesh(int level)
+        {
+            // Create vertices
+            Vector3[] vertices = new Vector3[4];
+            vertices[0] = new Vector3(0, level, 0);
+            vertices[1] = new Vector3(0, level, SettingsManager.Instance.MeshSettings.size);
+            vertices[2] = new Vector3(SettingsManager.Instance.MeshSettings.size, level, SettingsManager.Instance.MeshSettings.size);
+            vertices[3] = new Vector3(SettingsManager.Instance.MeshSettings.size, level, 0);
+
+            // Create triangles (indices)
+            int[] triangleIndices = new int[6];
+            triangleIndices[0] = 0;
+            triangleIndices[1] = 1;
+            triangleIndices[2] = 2;
+            triangleIndices[3] = 3;
+            triangleIndices[4] = 0;
+            triangleIndices[5] = 2;
+
+            // Create new mesh
+            waterMesh = new Mesh
+            {
+                // Assign vertices and triangles data to mesh
+                vertices = vertices,
+                triangles = triangleIndices
+            };
+
+            // Recalculate normals and tangents to ensure correct shading
+            waterMesh.RecalculateNormals();
+            waterMesh.RecalculateTangents();
+
+            // Assign mesh to mesh filter
+            waterMeshFilter.sharedMesh = waterMesh;
+
+            // Assign material to mesh renderer
+            waterMeshRenderer.material = waterMeshMaterial;
+        }
+
+        public void DisplayWaterMesh(bool display)
+        {
+            waterGO.SetActive(display);
         }
     }
 }

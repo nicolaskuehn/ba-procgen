@@ -21,6 +21,12 @@ namespace ProcGen.Settings
 
         public void OnEnable()
         {
+            // Get mesh generator from scene (when not already assigned)
+            if (meshGenerator == null)
+                meshGenerator = (MeshGenerator)FindObjectOfType(typeof(MeshGenerator));
+
+            meshGenerator.Init();
+
             // Attach event listener to each setting of the default octave
             Octave defaultOctave = SettingsManager.Instance.HeightfieldCompositor.Octaves[0];
             foreach (Setting setting in defaultOctave.HeightfieldGenerator.Settings)
@@ -30,11 +36,6 @@ namespace ProcGen.Settings
         public override void OnInspectorGUI()
         {
             // DrawDefaultInspector();
-
-            // Get mesh generator from scene (when not already assigned)
-            if (meshGenerator == null)
-                meshGenerator = (MeshGenerator)FindObjectOfType(typeof(MeshGenerator));
-
             DrawEditor();
         }
 
@@ -141,7 +142,7 @@ namespace ProcGen.Settings
             DrawOctaveSettings();
 
             if (SettingsManager.Instance.MeshSettings.autoUpdate)
-                meshGenerator.GenerateMesh();
+                meshGenerator.GenerateTerrainMesh();
         }
 
         private void DrawMeshSettings()
@@ -157,28 +158,47 @@ namespace ProcGen.Settings
             SettingsManager.Instance.MeshSettings.subdivisions = EditorGUILayout.IntSlider("Subdivisions", SettingsManager.Instance.MeshSettings.subdivisions, 1, 7);
 
             float origOffset = SettingsManager.Instance.MeshSettings.offset;
-            SettingsManager.Instance.MeshSettings.offset = EditorGUILayout.Slider("Size", SettingsManager.Instance.MeshSettings.offset, -1.0f, 1.0f);
+            SettingsManager.Instance.MeshSettings.offset = EditorGUILayout.Slider("Offset", SettingsManager.Instance.MeshSettings.offset, -1.0f, 1.0f);
 
             bool origAutoUpdate = SettingsManager.Instance.MeshSettings.autoUpdate;
             SettingsManager.Instance.MeshSettings.autoUpdate = EditorGUILayout.Toggle("Auto-Update", SettingsManager.Instance.MeshSettings.autoUpdate);
 
+            bool origShowWater = SettingsManager.Instance.MeshSettings.showWater;
+            SettingsManager.Instance.MeshSettings.showWater = EditorGUILayout.Toggle("Show water", SettingsManager.Instance.MeshSettings.showWater);
+
+            // Check if display of water has been changed
+            if (origShowWater != SettingsManager.Instance.MeshSettings.showWater)
+                meshGenerator.DisplayWaterMesh(SettingsManager.Instance.MeshSettings.showWater);
+            
             // Check if values have changed to update mesh automatically (only if auto-update is enabled)
             if (SettingsManager.Instance.MeshSettings.autoUpdate)
             {
-                bool updateMesh = false;
+                bool updateTerrainMesh = false;
+                bool updateWaterMesh = false;
 
-                if (origSize != SettingsManager.Instance.MeshSettings.size
-                    || origSubdivisions != SettingsManager.Instance.MeshSettings.subdivisions
+                if (origSize != SettingsManager.Instance.MeshSettings.size)
+                {
+                    updateTerrainMesh = true;
+                    updateWaterMesh = true;
+                }
+
+                if (origSubdivisions != SettingsManager.Instance.MeshSettings.subdivisions
                     || origOffset != SettingsManager.Instance.MeshSettings.offset
                 )
-                    updateMesh = true;
+                    updateTerrainMesh = true;
 
                 if (!origAutoUpdate)
-                    updateMesh = true;
+                    updateTerrainMesh = true;
 
-                // Update mesh if required
-                if (updateMesh)
-                    meshGenerator.GenerateMesh();
+                if (!origShowWater && SettingsManager.Instance.MeshSettings.showWater)
+                    updateWaterMesh = true;
+
+                // Update meshes if required
+                if (updateTerrainMesh)
+                    meshGenerator.GenerateTerrainMesh();
+
+                if (updateWaterMesh && SettingsManager.Instance.MeshSettings.showWater)
+                    meshGenerator.GenerateWaterMesh(SettingsManager.Instance.MeshSettings.waterLevel);
             }
 
             // Build button for generating the mesh (only if auto-update is disabled)
@@ -190,8 +210,9 @@ namespace ProcGen.Settings
                     foreach (Octave octave in SettingsManager.Instance.HeightfieldCompositor.Octaves)
                         octave.GenerationMethod = octaveGenerationMethods[octave.id];
 
-                    // Generate mesh
-                    meshGenerator.GenerateMesh();
+                    // Generate meshes
+                    meshGenerator.GenerateTerrainMesh();
+                    meshGenerator.GenerateWaterMesh(SettingsManager.Instance.MeshSettings.waterLevel);
                 }
             }
         }

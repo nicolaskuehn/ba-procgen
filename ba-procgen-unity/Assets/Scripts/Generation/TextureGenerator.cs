@@ -27,8 +27,8 @@ namespace ProcGen.Generation
                     switch(octave.GenerationMethod)
                     {
                         case Octave.EGenerationMethod.DiamondSquare:
-                            // TODO
-                            Debug.LogError("2D texture generation is not implemented for EGenerationMethod.DiamondSquare right now!");
+                            minHeight = ((DiamondSquareGenerator)octave.HeightfieldGenerator).MinHeight;
+                            maxHeight = ((DiamondSquareGenerator)octave.HeightfieldGenerator).MaxHeight;
                             break;
                         case Octave.EGenerationMethod.PerlinNoise:
                             float absMinMaxHeight = Mathf.Sqrt(0.5f); // Generally [-sqrt(N/4), sqrt(N/4)], N beeing the number of dimensions

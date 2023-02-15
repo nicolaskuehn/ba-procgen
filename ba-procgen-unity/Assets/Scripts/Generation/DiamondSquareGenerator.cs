@@ -136,17 +136,10 @@ namespace ProcGen.Generation
             // Describes the current size of a square and/or a diamond
             int unitSize = MeshGenerator.FaceCount1D;
 
-            /*
             heightfield[0,0] = GetRandomHeight();
             heightfield[0, unitSize] = GetRandomHeight();
             heightfield[unitSize, unitSize] = GetRandomHeight();
             heightfield[unitSize, 0] = GetRandomHeight();
-            */
-
-            heightfield[0, 0] = 0.0f;
-            heightfield[0, unitSize] = 5.0f;
-            heightfield[unitSize, unitSize] = 10.0f;
-            heightfield[unitSize, 0] = 5.0f;
 
             // Make copy of roughness that can be changed
             currentRoughness = Roughness;
@@ -173,6 +166,25 @@ namespace ProcGen.Generation
 
                 iterations++;
             }
+
+            // DEBUG - TODO: Remove
+            /*
+            Debug.Log(heightfield[0, 0]);
+            Debug.Log(heightfield[2, 0]);
+            Debug.Log(heightfield[4, 0]);
+            Debug.Log(heightfield[8, 0]);
+            Debug.Log(heightfield[2, 2]);
+            Debug.Log(heightfield[6, 2]);
+            Debug.Log(heightfield[0, 4]);
+            Debug.Log(heightfield[4, 4]);
+            Debug.Log(heightfield[8, 4]);
+            Debug.Log(heightfield[2, 6]);
+            Debug.Log(heightfield[6, 6]);
+            Debug.Log(heightfield[0, 8]);
+            Debug.Log(heightfield[4, 8]);
+            Debug.Log(heightfield[8, 8]);
+            */
+
         }
 
         private void InterpolateSquare(int unitSize)
@@ -202,7 +214,7 @@ namespace ProcGen.Generation
                     v /= 4.0f;
 
                     // Add random vale to the average value
-                    //v += GetRandomValue();
+                    v += GetRandomValue();
 
                     // Assign this weighted sum to the center vertex of the square
                     heightfield[x + halfUnitSize, z + halfUnitSize] = v;
@@ -219,9 +231,11 @@ namespace ProcGen.Generation
             int maxZ = heightfield.GetLength(1);
 
             // (i, j) describes the unit's coordinates in unit space
-            for (int j = 0; j < maxZ / halfUnitSize + 1; j++)
+            int offset = halfUnitSize > 1 ? 1 : 0;
+
+            for (int j = 0; j < maxZ / halfUnitSize + offset; j++)
             {
-                for (int i = 0; i < maxX / halfUnitSize + 1; i++)
+                for (int i = 0; i < maxX / halfUnitSize + offset; i++)
                 {
                     // Only interpolate points on a diamond grid
                     if ((j % 2 == 0 && i % 2 == 0) || j % 2 == 1 && i % 2 == 1)
@@ -231,24 +245,38 @@ namespace ProcGen.Generation
                     int x = i * halfUnitSize;
                     int z = j * halfUnitSize;
 
+                    bool log = false;// (x == 4 && z == 0);
+                    if (log)
+                    {
+                        Debug.Log($"(0,0): {heightfield[0,0]}");
+                        Debug.Log($"(4,4): {heightfield[4, 4]}");
+                        Debug.Log($"(8,0): {heightfield[8, 0]}");
+                    }
+
                     // Debug.Log($"[{unitSize}] (x,z): ({x},{z})");
 
                     // Calculate average of the values of the four (on the edges only three) diamond tips vertices to the middle vertex
-                    float v = 0;
+                    float v = 0.0f;
                     int numSamples = 0;
 
                     // Left
-                    if (x - halfUnitSize > 0)
+                    if (x - halfUnitSize >= 0)
                     {
                         v += heightfield[x - halfUnitSize, z];
                         numSamples++;
+                        
+                        if(log)
+                            Debug.Log($"Left");
                     }
                     
                     // Top
-                    if (z - halfUnitSize > 0)
+                    if (z - halfUnitSize >= 0)
                     {
                         v += heightfield[x, z - halfUnitSize];
                         numSamples++;
+
+                        if (log)
+                            Debug.Log($"Top");
                     }
                     
                     // Right
@@ -256,6 +284,9 @@ namespace ProcGen.Generation
                     {
                         v += heightfield[x + halfUnitSize, z];
                         numSamples++;
+
+                        if (log)
+                            Debug.Log($"Right");
                     }
 
                     // Bottom
@@ -263,12 +294,18 @@ namespace ProcGen.Generation
                     {
                         v += heightfield[x, z + halfUnitSize];
                         numSamples++;
+
+                        if (log)
+                            Debug.Log($"Bottom");
                     }
 
                     v /= numSamples;
 
+                    if (log)
+                        Debug.Log($"value: {v}");
+
                     // Add random vale to the average value
-                    //v += GetRandomValue();
+                    v += GetRandomValue();
 
                     // Assign this weighted sum to the center vertex of the square
                     heightfield[x, z] = v;

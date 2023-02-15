@@ -49,6 +49,17 @@ namespace ProcGen.Generation
             ? (_waterMeshRenderer = waterGO.GetComponent<MeshRenderer>())
             : _waterMeshRenderer;
 
+        // ... Properties ... //
+        // Number of faces
+        public static int FaceCount1D => 1 << SettingsManager.Instance.MeshSettings.subdivisions;
+
+        // Number of vertices in one direction/dimension (mesh is a square, so all directions have the same length)
+        public static int VertexCount1D => FaceCount1D + 1;
+
+        // Factor used to position the vertices to match the given size
+        public static float SizeScalingFactor => (float) SettingsManager.Instance.MeshSettings.size / FaceCount1D;
+
+
         private void Awake()
         {
             Init();
@@ -83,49 +94,40 @@ namespace ProcGen.Generation
         // Generates a 2D grid mesh of a plane
         public void GenerateTerrainMesh()
         {
-            // Get mesh resolution from SettingsManager
-            int size = SettingsManager.Instance.MeshSettings.size;
-            int subdivisions = SettingsManager.Instance.MeshSettings.subdivisions;
-
             // Mesh data
-            int vertexCount1D = 1 << subdivisions + 1;
-            Vector3[] vertices = new Vector3[vertexCount1D * vertexCount1D];
-            int faceCount = vertexCount1D - 1;
-            int[] triangleIndices = new int[2 * faceCount * faceCount * 3];
-
-            // Factor used to position the vertices to match the given size
-            float sizeScalingFactor = (float)size / vertexCount1D;
+            Vector3[] vertices = new Vector3[VertexCount1D * VertexCount1D];
+            int[] triangleIndices = new int[2 * FaceCount1D * FaceCount1D * 3];
 
             // Create vertices
             Vector3 vertexPos = Vector3.zero;
-            for(int j = 0; j < vertexCount1D; j++)
+            for(int j = 0; j < VertexCount1D; j++)
             {
-                for(int i = 0; i < vertexCount1D; i++)
+                for(int i = 0; i < VertexCount1D; i++)
                 {
-                    float x = i * sizeScalingFactor;
-                    float z = j * sizeScalingFactor;
+                    float x = i * SizeScalingFactor;
+                    float z = j * SizeScalingFactor;
 
                     vertexPos.x = x;
                     vertexPos.z = z;
                     // Assign value of heightfield to y-position
                     vertexPos.y = SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(x, z);
                     
-                    vertices[j * vertexCount1D + i] = vertexPos;
+                    vertices[j * VertexCount1D + i] = vertexPos;
                 }
             }
 
             // Create triangles (indices)
             int triangleIndex = 0;
 
-            for (int z = 0; z < faceCount; z++)
+            for (int z = 0; z < FaceCount1D; z++)
             {
-                for (int x = 0; x < faceCount; x++)
+                for (int x = 0; x < FaceCount1D; x++)
                 {
                     // Vertices of the current square 
-                    int bl = z * vertexCount1D + x;                 // bottom left
-                    int tl = (z + 1) * vertexCount1D + x;           // top left
-                    int tr = (z + 1) * vertexCount1D + x + 1;       // top right
-                    int br = z * vertexCount1D + x + 1;             // bottom right
+                    int bl = z * VertexCount1D + x;                 // bottom left
+                    int tl = (z + 1) * VertexCount1D + x;           // top left
+                    int tr = (z + 1) * VertexCount1D + x + 1;       // top right
+                    int br = z * VertexCount1D + x + 1;             // bottom right
 
                     // Lower left triangle
                     triangleIndices[triangleIndex] = bl;

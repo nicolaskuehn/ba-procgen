@@ -20,8 +20,16 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _HeightColorsTex:
+    - _HeightColorsAlbedoTex:
         m_Texture: {fileID: 2800000, guid: 527e0034bb4d9eb4781c4ccb790fac17, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _HeightColorsSmoothnessTex:
+        m_Texture: {fileID: 2800000, guid: 58cb8762d2522da4bbfb81a1655f9659, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _HeightSmoothnessTex:
+        m_Texture: {fileID: 2800000, guid: 58cb8762d2522da4bbfb81a1655f9659, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -31,11 +39,12 @@ Material:
     m_Ints: []
     m_Floats:
     - _Glossiness: 0.5
-    - _MaxHeight: 4.54
+    - _MaxHeight: 4
     - _Metallic: 0
     - _MinHeight: 0
-    - _WaterLevel: 0.26
+    - _SmoothnessDEBUG: 0.392
+    - _WaterLevel: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _SandColor: {r: 1, g: 1, b: 0.5896226, a: 1}
+    - _SandColor: {r: 1, g: 1, b: 0.5, a: 1}
   m_BuildTextureStacks: []

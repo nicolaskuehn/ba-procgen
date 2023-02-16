@@ -9,7 +9,7 @@ namespace ProcGen.Generation
         public float Amplitude 
         {
             get => (float)Settings.Find(s => s.Name == "Amplitude").Value;
-            private set
+            set
             {
                 Settings.Find(s => s.Name == "Amplitude").Value = value;
             }
@@ -18,7 +18,7 @@ namespace ProcGen.Generation
         public float Frequency
         {
             get => (float)Settings.Find(s => s.Name == "Frequency").Value;
-            private set
+            set
             {
                 Settings.Find(s => s.Name == "Frequency").Value = value;
             }

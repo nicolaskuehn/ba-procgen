@@ -12,7 +12,8 @@ namespace ProcGen.Generation
         public enum EGenerationMethod
         {
             DiamondSquare = 0,
-            PerlinNoise = 1
+            FractionalBrownianMotion = 1,
+            PerlinNoise = 2
         }
 
         private EGenerationMethod generationMethod;
@@ -33,7 +34,12 @@ namespace ProcGen.Generation
                         HeightfieldGenerator = new DiamondSquareGenerator();
                         generationMethod = EGenerationMethod.DiamondSquare;
                         break;
-                    
+
+                    case EGenerationMethod.FractionalBrownianMotion:
+                        HeightfieldGenerator = new FractionalBrownianMotionGenerator();
+                        generationMethod = EGenerationMethod.FractionalBrownianMotion;
+                        break;
+
                     case EGenerationMethod.PerlinNoise:
                         HeightfieldGenerator = new PerlinNoiseGenerator();
                         generationMethod = EGenerationMethod.PerlinNoise;

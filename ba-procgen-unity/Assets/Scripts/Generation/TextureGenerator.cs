@@ -30,12 +30,19 @@ namespace ProcGen.Generation
                             minHeight = ((DiamondSquareGenerator)octave.HeightfieldGenerator).MinHeight;
                             maxHeight = ((DiamondSquareGenerator)octave.HeightfieldGenerator).MaxHeight;
                             break;
+
+                        case Octave.EGenerationMethod.FractionalBrownianMotion:
+                            minHeight = 0.0f;   // TODO: Calculate real min height!
+                            maxHeight = 10.0f;  // TODO: Calculate real max height!
+                            break;
+
                         case Octave.EGenerationMethod.PerlinNoise:
                             float absMinMaxHeight = Mathf.Sqrt(0.5f); // Generally [-sqrt(N/4), sqrt(N/4)], N beeing the number of dimensions
                             float amplitude = ((PerlinNoiseGenerator)octave.HeightfieldGenerator).Amplitude;
                             minHeight = (-absMinMaxHeight + SettingsManager.Instance.MeshSettings.offset) * amplitude;
                             maxHeight = (absMinMaxHeight + SettingsManager.Instance.MeshSettings.offset) * amplitude;
                             break;
+
                         default:
                             Debug.LogError("2D texture generation is not implemented for this generation method!");
                             break;

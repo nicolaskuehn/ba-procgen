@@ -11,11 +11,8 @@ namespace ProcGen.Generation
         private GameObject terrainGO;
 
         private Mesh terrainMesh;
-        private Material _terrainMeshMaterial;
-        private Material terrainMeshMaterial 
-            => _terrainMeshMaterial == null 
-            ? (_terrainMeshMaterial = new Material(Shader.Find("Standard"))) 
-            : _terrainMeshMaterial;
+        [SerializeField]
+        private Material terrainMeshMaterial;
        
         private MeshFilter _terrainMeshFilter;
         private MeshFilter terrainMeshFilter 
@@ -212,6 +209,12 @@ namespace ProcGen.Generation
 
             // Assign material to mesh renderer
             waterMeshRenderer.material = waterMeshMaterial;
+        }
+
+        public void SetWaterLevel(float level)
+        {
+            // Set water level in terrain material (for height dependant coloring)
+            terrainGO.GetComponent<Renderer>().sharedMaterial.SetFloat("_WaterLevel", level);
         }
 
         public void DisplayWaterMesh(bool display)

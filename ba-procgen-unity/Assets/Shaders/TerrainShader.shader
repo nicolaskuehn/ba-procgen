@@ -11,7 +11,7 @@ Shader "Custom/TerrainShader"
         _WaterLevel ("Water Level", float) = 0.0
         _HeightColorsAlbedoTex ("Height Color Gradient", 2D) = "white" {}
         _HeightSmoothnessTex ("Height Smoothness Gradient", 2D) = "white" {}
-        _SandColor ("Sand Color", Color) = (1.0,1.0,0.5,1.0)
+        _SandColor ("Sand Color", Color) = (1.0,0.9,0.6,1.0)
     }
     SubShader
     {

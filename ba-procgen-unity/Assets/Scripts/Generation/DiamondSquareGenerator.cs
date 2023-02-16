@@ -54,9 +54,9 @@ namespace ProcGen.Generation
         public DiamondSquareGenerator(int seed = 42) : base(seed)
         {
             // Add default settings
-            Settings.Add(new Setting("Roughness", 2.0f, 1.0f, 16.0f));
-            Settings.Add(new Setting("MinHeight", -5.0f, -20.0f, 20.0f));
-            Settings.Add(new Setting("MaxHeight", 5.0f, -20.0f, 20.0f));
+            Settings.Add(new Setting("Roughness", 4.0f, 1.0f, 16.0f));
+            Settings.Add(new Setting("MinHeight", 0.0f, -20.0f, 20.0f));
+            Settings.Add(new Setting("MaxHeight", 10.0f, -20.0f, 20.0f));
         }
 
         public override float GetHeight(float x, float z)

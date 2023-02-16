@@ -166,6 +166,9 @@ namespace ProcGen.Settings
             bool origShowWater = SettingsManager.Instance.MeshSettings.showWater;
             SettingsManager.Instance.MeshSettings.showWater = EditorGUILayout.Toggle("Show water", SettingsManager.Instance.MeshSettings.showWater);
 
+            float origWaterLevel = SettingsManager.Instance.MeshSettings.waterLevel;
+            SettingsManager.Instance.MeshSettings.waterLevel = EditorGUILayout.Slider("Water level", SettingsManager.Instance.MeshSettings.waterLevel, -10.0f, 10.0f);
+
             // Check if display of water has been changed
             if (origShowWater != SettingsManager.Instance.MeshSettings.showWater)
                 meshGenerator.DisplayWaterMesh(SettingsManager.Instance.MeshSettings.showWater);
@@ -191,6 +194,9 @@ namespace ProcGen.Settings
                     updateTerrainMesh = true;
 
                 if (!origShowWater && SettingsManager.Instance.MeshSettings.showWater)
+                    updateWaterMesh = true;
+
+                if (origWaterLevel != SettingsManager.Instance.MeshSettings.waterLevel)
                     updateWaterMesh = true;
 
                 // Update meshes if required

@@ -87,11 +87,11 @@ namespace ProcGen.Settings
         //[Tooltip("Determines if the mesh updates automatically with every change in the settings menu")]
         public bool autoUpdate = false;
 
-        // Level of the water plane
-        public int waterLevel = 0;
-
         // Can be toggled to show and hide the water plane
         public bool showWater = true;
+
+        // Level of the water plane
+        public float waterLevel = 0.0f;
     } 
 
 }

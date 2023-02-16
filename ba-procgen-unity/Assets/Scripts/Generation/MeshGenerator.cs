@@ -177,7 +177,7 @@ namespace ProcGen.Generation
             terrainMeshRenderer.material = terrainMeshMaterial;
         }
 
-        public void GenerateWaterMesh(int level)
+        public void GenerateWaterMesh(float level)
         {
             // Create vertices
             Vector3[] vertices = new Vector3[4];

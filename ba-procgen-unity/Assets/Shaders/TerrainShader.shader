@@ -4,13 +4,13 @@ Shader "Custom/TerrainShader"
     {
         _Color ("Color", Color) = (1,1,1,1)
         _MainTex ("Albedo (RGB)", 2D) = "white" {}
-        _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Metallic ("Metallic", Range(0,1)) = 0.0
 
         _MinHeight ("Min Height", Range(-10.0, 10.0)) = 0.0
-        _MaxHeight ("Max Height", Range(0.0, 20.0)) = 15.0
+        _MaxHeight ("Max Height", Range(0.0, 20.0)) = 4.0
         _WaterLevel ("Water Level", float) = 0.0
-        _HeightColorsTex ("Height Color Gradient (RGB)", 2D) = "white" {}
+        _HeightColorsAlbedoTex ("Height Color Gradient", 2D) = "white" {}
+        _HeightSmoothnessTex ("Height Smoothness Gradient", 2D) = "white" {}
         _SandColor ("Sand Color", Color) = (1.0,1.0,0.5,1.0)
     }
     SubShader
@@ -33,14 +33,14 @@ Shader "Custom/TerrainShader"
             float3 worldPos;
         };
 
-        half _Glossiness;
         half _Metallic;
         fixed4 _Color;
 
         float _MinHeight;
         float _MaxHeight;
         float _WaterLevel;
-        sampler2D _HeightColorsTex;
+        sampler2D _HeightColorsAlbedoTex;
+        sampler2D _HeightSmoothnessTex;
         fixed4 _SandColor;
 
         // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
@@ -62,17 +62,22 @@ Shader "Custom/TerrainShader"
             // Albedo comes from a texture tinted by color
             fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
             
-            // Set color dependant on height
+            // Set color and smoothness dependant on height (from 2d gradient textures)
             float current_height = IN.worldPos.y;
             uint above_water = step(_WaterLevel, current_height);
+            
             float sample_point_x = map(_MinHeight, _MaxHeight, 0.0, 1.0, current_height);
-            float4 terrain_color = tex2D(_HeightColorsTex, float2(sample_point_x, 0));
+            
+            fixed3 terrain_color = tex2D(_HeightColorsAlbedoTex, float2(sample_point_x, 0)).rgb;
+            fixed terrain_smoothness = tex2D(_HeightSmoothnessTex, float2(sample_point_x, 0)).r;
+
+            // Set albedo (color) and smoothness
             o.Albedo = above_water * terrain_color + (1.0 - above_water) * _SandColor;
+            o.Smoothness = terrain_smoothness;
             
-            
-            // Metallic and smoothness come from slider variables
+            // Metallic comes from slider variable
             o.Metallic = _Metallic;
-            o.Smoothness = _Glossiness;
+            
             o.Alpha = c.a;
         }
         ENDCG

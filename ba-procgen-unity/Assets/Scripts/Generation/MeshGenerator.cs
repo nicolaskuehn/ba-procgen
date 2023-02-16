@@ -68,6 +68,21 @@ namespace ProcGen.Generation
         public void Init()
         {
             // ... Init child game objects that hold the different meshes ... //
+
+            // Only initialize if references do not exist
+            if (transform.childCount > 0 && terrainGO != null && waterGO != null)
+                return;
+
+            // Delete old children first (to avoid duplicates)
+            if (transform.childCount > 0)
+            {
+                foreach (Transform child in transform)
+                {
+                    Debug.Log($"Destroy gameObject with instanceID {child.gameObject.GetInstanceID()}");
+                    DestroyImmediate(child.gameObject);
+                }
+            }
+            
             // Terrain
             if (terrainGO == null)
             {

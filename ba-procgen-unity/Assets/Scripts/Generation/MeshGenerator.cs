@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 using ProcGen.Settings;
 
 namespace ProcGen.Generation
@@ -10,10 +12,11 @@ namespace ProcGen.Generation
         // Terrain
         private GameObject terrainGO;
 
-        private Mesh terrainMesh;
+        // private Mesh terrainMesh;
         [SerializeField]
         private Material terrainMeshMaterial;
        
+        /*
         private MeshFilter _terrainMeshFilter;
         private MeshFilter terrainMeshFilter 
             => _terrainMeshFilter == null
@@ -25,6 +28,7 @@ namespace ProcGen.Generation
             => _terrainMeshRenderer == null
             ? (_terrainMeshRenderer = terrainGO.GetComponent<MeshRenderer>())
             : _terrainMeshRenderer;
+        */
 
 
         // Water
@@ -46,6 +50,7 @@ namespace ProcGen.Generation
             ? (_waterMeshRenderer = waterGO.GetComponent<MeshRenderer>())
             : _waterMeshRenderer;
 
+
         // ... Properties ... //
         // Number of faces
         public static int FaceCount1D => 1 << SettingsManager.Instance.MeshSettings.subdivisions;
@@ -56,6 +61,9 @@ namespace ProcGen.Generation
         // Factor used to position the vertices to match the given size
         public static float SizeScalingFactor => (float) SettingsManager.Instance.MeshSettings.size / FaceCount1D;
 
+
+        // ... Constants ... //
+        private const int MAX_SUBDIVISIONS_PER_MESH = 7;
 
         private void Awake()
         {
@@ -73,10 +81,13 @@ namespace ProcGen.Generation
             // Delete old children first (to avoid duplicates)
             if (transform.childCount > 0)
             {
-                foreach (Transform child in transform)
+                List<Transform> tempChildList = transform.Cast<Transform>().ToList();
+                foreach (Transform child in tempChildList)
                 {
-                    Debug.Log($"Destroy gameObject with instanceID {child.gameObject.GetInstanceID()}");
-                    DestroyImmediate(child.gameObject);
+                    if (Application.isPlaying)
+                        Destroy(child.gameObject);
+                    else
+                        DestroyImmediate(child.gameObject);
                 }
             }
             
@@ -103,43 +114,103 @@ namespace ProcGen.Generation
             }
         }
 
-        // Generates a 2D grid mesh of a plane
         public void GenerateTerrainMesh()
         {
+            // Delete all mesh instances first
+            List<Transform> tempChildList = terrainGO.transform.Cast<Transform>().ToList();
+            foreach (Transform child in tempChildList)
+            {
+                if (Application.isPlaying)
+                    Destroy(child.gameObject);
+                else
+                    DestroyImmediate(child.gameObject);
+            }
+
+            int size = SettingsManager.Instance.MeshSettings.size;
+            int subdivisions = SettingsManager.Instance.MeshSettings.subdivisions;
+
+            if (subdivisions > MAX_SUBDIVISIONS_PER_MESH)
+            {
+                int submeshCount1D = 1 << (subdivisions - MAX_SUBDIVISIONS_PER_MESH);
+                int submeshSubdivisions = MAX_SUBDIVISIONS_PER_MESH;
+
+                int scaledSize = size / submeshCount1D;
+
+                Vector3 submeshOrigin = Vector3.zero;
+                for (int j = 0; j < submeshCount1D; j++)
+                {
+                    for (int i = 0; i < submeshCount1D; i++)
+                    {
+                        // Add new game object for each submesh
+                        submeshOrigin.x = i * scaledSize;
+                        submeshOrigin.z = j * scaledSize;
+                        CreateSubmeshGameObject(
+                            terrainGO.transform, 
+                            submeshOrigin, 
+                            GenerateTerrainSubmesh(submeshOrigin, scaledSize, submeshSubdivisions), 
+                            terrainMeshMaterial,  
+                            j * submeshCount1D + i
+                        );
+                    }
+                }
+
+                // Averaging normals on submesh borders to avoid visible seams
+                foreach (Transform submesh in terrainGO.transform)
+                {
+                    // TODO: Override normals at borders (average)
+                    // submesh.GetComponent<MeshFilter>().sharedMesh.normals
+                }
+            }
+            else
+            {
+                CreateSubmeshGameObject(terrainGO.transform, Vector3.zero, GenerateTerrainSubmesh(Vector3.zero, size, subdivisions), terrainMeshMaterial, 0);
+            }
+        }
+
+        // Generates a 2D grid mesh of a plane
+        public Mesh GenerateTerrainSubmesh(Vector3 origin, int size1D, int subdivisions)
+        {
             // Mesh data
-            Vector3[] vertices = new Vector3[VertexCount1D * VertexCount1D];
-            int[] triangleIndices = new int[2 * FaceCount1D * FaceCount1D * 3];
+            //Vector3[] vertices = new Vector3[VertexCount1D * VertexCount1D];
+            //int[] triangleIndices = new int[2 * FaceCount1D * FaceCount1D * 3];
+            int localFaceCount1D = 1 << subdivisions;
+            int localVertexCount1D = localFaceCount1D + 1;
+            float localSizeScalingFactor = (float) size1D / localFaceCount1D;
+
+            Vector3[] vertices = new Vector3[localVertexCount1D * localVertexCount1D];
+            int[] triangleIndices = new int[2 * localVertexCount1D * localVertexCount1D * 3];
 
             // Create vertices
             Vector3 vertexPos = Vector3.zero;
-            for(int j = 0; j < VertexCount1D; j++)
+            for(int j = 0; j < localVertexCount1D; j++)
             {
-                for(int i = 0; i < VertexCount1D; i++)
+                for(int i = 0; i < localVertexCount1D; i++)
                 {
-                    float x = i * SizeScalingFactor;
-                    float z = j * SizeScalingFactor;
+                    float x = i * localSizeScalingFactor;
+                    float z = j * localSizeScalingFactor;
 
                     vertexPos.x = x;
                     vertexPos.z = z;
                     // Assign value of heightfield to y-position
-                    vertexPos.y = SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(x, z);
+                    vertexPos.y = SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(x + origin.x, z + origin.z);
                     
-                    vertices[j * VertexCount1D + i] = vertexPos;
+                    vertices[j * localVertexCount1D + i] = vertexPos;
                 }
             }
 
             // Create triangles (indices)
+            //int triangleIndex = (startX + 2 * startZ) * localFaceCount1D * 6; // Quadrant index * Face count * 6 indeces per face (describing 2 triangles per face)
             int triangleIndex = 0;
 
-            for (int z = 0; z < FaceCount1D; z++)
+            for (int z = 0; z < localFaceCount1D; z++)
             {
-                for (int x = 0; x < FaceCount1D; x++)
+                for (int x = 0; x < localFaceCount1D; x++)
                 {
                     // Vertices of the current square 
-                    int bl = z * VertexCount1D + x;                 // bottom left
-                    int tl = (z + 1) * VertexCount1D + x;           // top left
-                    int tr = (z + 1) * VertexCount1D + x + 1;       // top right
-                    int br = z * VertexCount1D + x + 1;             // bottom right
+                    int bl = z * localVertexCount1D + x;                 // bottom left
+                    int tl = (z + 1) * localVertexCount1D + x;           // top left
+                    int tr = (z + 1) * localVertexCount1D + x + 1;       // top right
+                    int br = z * localVertexCount1D + x + 1;             // bottom right
 
                     // Lower left triangle
                     triangleIndices[triangleIndex] = bl;
@@ -155,23 +226,13 @@ namespace ProcGen.Generation
                 }
             }
 
-            // Create new mesh
-            terrainMesh = new Mesh
+            // Create and return new mesh
+            return new Mesh
             {
                 // Assign vertices and triangles data to mesh
                 vertices = vertices,
                 triangles = triangleIndices
             };
-
-            // Recalculate normals and tangents to ensure correct shading
-            terrainMesh.RecalculateNormals();
-            terrainMesh.RecalculateTangents();
-
-            // Assign mesh to mesh filter
-            terrainMeshFilter.sharedMesh = terrainMesh;
-
-            // Assign material to mesh renderer
-            terrainMeshRenderer.material = terrainMeshMaterial;
         }
 
         public void GenerateWaterMesh(float level)
@@ -220,6 +281,28 @@ namespace ProcGen.Generation
         public void DisplayWaterMesh(bool display)
         {
             waterGO.SetActive(display);
+        }
+
+        private GameObject CreateSubmeshGameObject(Transform parent, Vector3 pos, Mesh mesh, Material material, int index)
+        {
+            // Create new game object and add necessary components
+            GameObject submesh = new GameObject($"Submesh {index}");
+            submesh.transform.parent = parent;
+            submesh.transform.position = pos;
+            submesh.AddComponent<MeshFilter>();
+            submesh.AddComponent<MeshRenderer>();
+
+            // Recalculate normals and tangents to ensure correct shading
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+
+            // Assign mesh to mesh filter
+            submesh.GetComponent<MeshFilter>().sharedMesh = mesh;
+
+            // Assign material to mesh renderer
+            submesh.GetComponent<MeshRenderer>().material = material;
+
+            return submesh;
         }
     }
 }

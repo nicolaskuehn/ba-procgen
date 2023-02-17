@@ -155,7 +155,7 @@ namespace ProcGen.Settings
             SettingsManager.Instance.MeshSettings.size = EditorGUILayout.IntSlider("Size", SettingsManager.Instance.MeshSettings.size, 2, 100);
 
             int origSubdivisions = SettingsManager.Instance.MeshSettings.subdivisions;
-            SettingsManager.Instance.MeshSettings.subdivisions = EditorGUILayout.IntSlider("Subdivisions", SettingsManager.Instance.MeshSettings.subdivisions, 1, 7);
+            SettingsManager.Instance.MeshSettings.subdivisions = EditorGUILayout.IntSlider("Subdivisions", SettingsManager.Instance.MeshSettings.subdivisions, 1, 10);
 
             float origOffset = SettingsManager.Instance.MeshSettings.offset;
             SettingsManager.Instance.MeshSettings.offset = EditorGUILayout.Slider("Offset", SettingsManager.Instance.MeshSettings.offset, -1.0f, 1.0f);

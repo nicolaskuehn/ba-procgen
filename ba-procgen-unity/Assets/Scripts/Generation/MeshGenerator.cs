@@ -154,13 +154,79 @@ namespace ProcGen.Generation
                     }
                 }
 
-                // Averaging normals on submesh borders to avoid visible seams
-                foreach (Transform submesh in terrainGO.transform)
+                // ... Averaging normals on submesh borders to avoid visible seams ... //
+                int localVertexCount1D = (1 << submeshSubdivisions) + 1;
+
+                // Vertical seams
+                for (int j = 0; j < submeshCount1D; j++)
                 {
-                    // TODO: Override normals at borders (average)
-                    // submesh.GetComponent<MeshFilter>().sharedMesh.normals
+                    for (int i = 0; i < submeshCount1D - 1; i++)
+                    {
+                        int currentChunkIndex = j * submeshCount1D + i;
+                        Mesh currentChunkMesh = terrainGO.transform.GetChild(currentChunkIndex).GetComponent<MeshFilter>().sharedMesh;
+                        Mesh nextChunkMesh = terrainGO.transform.GetChild(currentChunkIndex + 1).GetComponent<MeshFilter>().sharedMesh;
+
+                        Vector3[] currentChunkNormals = currentChunkMesh.normals;
+                        Vector3[] nextChunkNormals = nextChunkMesh.normals;
+
+                        // Average normal for each vertex on the right edge of currentChunk and left edge of nextChunk
+                        int vertexRowEndIndex = localVertexCount1D - 1;
+
+                        for (int vz = 0; vz < localVertexCount1D; vz++)
+                        {
+                            // Calculate indices
+                            int currentIndex = (vz + 1) * vertexRowEndIndex + vz;   // Right edge of current chunk
+                            int nextIndex = vz * vertexRowEndIndex + vz;            // Left edge of next chunk
+
+                            // Calculate an average normal of both normals
+                            Vector3 averagedNormal = (currentChunkNormals[currentIndex] + nextChunkNormals[nextIndex]) / 2.0f;
+
+                            // Assign the new normal to both chunks
+                            currentChunkNormals[currentIndex] = averagedNormal;
+                            nextChunkNormals[nextIndex] = averagedNormal;
+                        }
+
+                        // Assign modified normals back to the meshes
+                        currentChunkMesh.normals = currentChunkNormals;
+                        nextChunkMesh.normals = nextChunkNormals;
+                    }  
+                }
+
+                // Horizontal seams
+                for (int j = 0; j < submeshCount1D - 1; j++)
+                {
+                    for (int i = 0; i < submeshCount1D; i++)
+                    {
+                        Mesh currentChunkMesh = terrainGO.transform.GetChild(j * submeshCount1D + i).GetComponent<MeshFilter>().sharedMesh;
+                        Mesh nextChunkMesh = terrainGO.transform.GetChild((j + 1) * submeshCount1D + i).GetComponent<MeshFilter>().sharedMesh;
+
+                        Vector3[] currentChunkNormals = currentChunkMesh.normals;
+                        Vector3[] nextChunkNormals = nextChunkMesh.normals;
+
+                        // Average normal for each vertex on the top edge of currentChunk and bottom edge of nextChunk
+                        int vertexLastRowStartIndex = localVertexCount1D * localVertexCount1D - localVertexCount1D;
+
+                        for (int vx = 0; vx < localVertexCount1D; vx++)
+                        {
+                            // Calculate indices
+                            int currentIndex = vertexLastRowStartIndex + vx;    // Top edge of current chunk
+                            int nextIndex = vx;                                 // Bottom edge of next chunk
+
+                            // Calculate an average normal of both normals
+                            Vector3 averagedNormal = (currentChunkNormals[currentIndex] + nextChunkNormals[nextIndex]) / 2.0f;
+
+                            // Assign the new normal to both chunks
+                            currentChunkNormals[currentIndex] = averagedNormal;
+                            nextChunkNormals[nextIndex] = averagedNormal;
+                        }
+
+                        // Assign modified normals back to the meshes
+                        currentChunkMesh.normals = currentChunkNormals;
+                        nextChunkMesh.normals = nextChunkNormals;
+                    }  
                 }
             }
+
             else
             {
                 CreateSubmeshGameObject(terrainGO.transform, Vector3.zero, GenerateTerrainSubmesh(Vector3.zero, size, subdivisions), terrainMeshMaterial, 0);

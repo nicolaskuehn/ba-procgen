@@ -243,6 +243,9 @@ namespace ProcGen.Settings
 
             // Settings
             UpdateNoiseSettings();
+
+            // ... Benchmarking & Statistics ... //
+            // TODO
         }
     }
 }

@@ -1,8 +1,10 @@
 using UnityEngine;
 using UnityEditor;
-using ProcGen.Generation;
 using System.Collections.Generic;
 using System;
+
+using ProcGen.Generation;
+using ProcGen.Benchmarking;
 
 namespace ProcGen.Settings
 {
@@ -219,11 +221,26 @@ namespace ProcGen.Settings
                     foreach (Octave octave in SettingsManager.Instance.HeightfieldCompositor.Octaves)
                         octave.GenerationMethod = octaveGenerationMethods[octave.id];
 
-                    // Generate meshes
+                    // ... Generate meshes ... //
+                    // Terrain
+                    StatisticsManager.TerrainGenerationTimer.Reset();
+                    StatisticsManager.TerrainGenerationTimer.Start();
                     meshGenerator.GenerateTerrainMesh();
+                    StatisticsManager.TerrainGenerationTimer.Stop();
+
+                    // Water
                     meshGenerator.GenerateWaterMesh(SettingsManager.Instance.MeshSettings.waterLevel);
                 }
             }
+        }
+
+        private void DrawStatistics()
+        {
+            // Draw heading
+            EditorGUILayout.LabelField("Benchmarking & Statistics", EditorStyles.boldLabel);
+
+            // Run-time measurements
+            EditorGUILayout.LabelField($"Mesh generation run-time: {Statistics.TerrainGenerationTimeMilliseconds} ms", EditorStyles.label);
         }
 
         private void DrawEditor()
@@ -244,8 +261,13 @@ namespace ProcGen.Settings
             // Settings
             UpdateNoiseSettings();
 
+
+            // ... Space ... //
+            EditorGUILayout.Space();
+
+
             // ... Benchmarking & Statistics ... //
-            // TODO
+            DrawStatistics();
         }
     }
 }

@@ -108,7 +108,7 @@ namespace ProcGen.Generation
                 waterGO = new GameObject("Water");
 
                 waterGO.AddComponent<MeshFilter>();
-                waterGO.AddComponent<MeshRenderer>();
+                waterGO.AddComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
                 waterGO.transform.parent = transform;
             }

@@ -57,12 +57,12 @@ namespace ProcGen.Generation
         // Constructor
         public FractionalBrownianMotionGenerator (int seed = 42) : base(seed)
         {
-            Settings.Add(new Setting("Fractal Increment", 0.2f, 0.0f, 1.0f));
+            Settings.Add(new Setting("Fractal Increment", 1.0f, 0.0f, 1.0f));
             Settings.Add(new Setting("Lacunarity", 2.0f, 0.0f, 16.0f));
-            Settings.Add(new Setting("Number of Octaves", 4, 1, 10));
+            Settings.Add(new Setting("Number of Octaves", 6, 1, 10));
 
-            Settings.Add(new Setting("Amplitude", 2.0f, 0.0f, 20.0f));
-            Settings.Add(new Setting("Frequency", 0.2f, 0.0f, 1.0f));
+            Settings.Add(new Setting("Amplitude", 1.0f, 0.0f, 20.0f));
+            Settings.Add(new Setting("Frequency", 1.0f, 0.0f, 1.0f));
 
             // Initialize noise generator with given seed and neutral standard settings
             noiseGen = new PerlinNoiseGenerator(seed);
@@ -80,7 +80,7 @@ namespace ProcGen.Generation
 
             float height = 0.0f;
 
-            // Set amplitude and frequency for noise gen
+            // Set amplitude and frequency for noise generator
             noiseGen.Amplitude = Amplitude;
             noiseGen.Frequency = Frequency;
 
@@ -94,5 +94,28 @@ namespace ProcGen.Generation
 
             return height;
         }
+
+        /*
+        public override float GetHeight(float x, float z)
+        {
+            float H = FractalIncrement;
+            float G = Mathf.Pow(2, -H); // exp2(-H);
+            
+            float f = Frequency;
+            float a = Amplitude;
+            float t = 0.0f;
+
+            for (int i = 0; i < NumOctaves; i++)
+            {
+                t += a * noiseGen.GetHeight(f * x, f * z);
+                //t += a * value_noise_here();
+                f *= 2.0f;
+                a *= G;
+            }
+
+            return t;
+        }
+        */
+
     }
 }

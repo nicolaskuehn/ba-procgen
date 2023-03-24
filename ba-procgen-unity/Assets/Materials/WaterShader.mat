@@ -24,10 +24,17 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _WaterColorsAlbedoTex:
+        m_Texture: {fileID: 2800000, guid: ca538dd7bdb6cd64ea3d5929824a3d66, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Glossiness: 0
-    - _Metallic: 0
+    - _Glossiness: 0.907
+    - _Metallic: 0.021
+    - _WaterDensity: 3.35
     m_Colors:
     - _Color: {r: 0, g: 0.7019608, b: 1, a: 0.69803923}
+    - _ColorSeabed: {r: 0.13216448, g: 0.13216448, b: 0.2830189, a: 1}
+    - _ColorSurface: {r: 0, g: 0.5171318, b: 1, a: 1}
   m_BuildTextureStacks: []

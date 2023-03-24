@@ -2,8 +2,8 @@ Shader "Custom/WaterShader"
 {
     Properties
     {
-        _Color ("Color", Color) = (1,1,1,1) // 00B3FF
-        _MainTex ("Albedo (RGB)", 2D) = "white" {}
+        _WaterColorsAlbedoTex ("Water Color Gradient", 2D) = "blue" {}
+        _WaterDensity ("Water Density", Range(0,10)) = 5
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Metallic ("Metallic", Range(0,1)) = 0.0
     }
@@ -29,13 +29,17 @@ Shader "Custom/WaterShader"
         struct Input
         {
             float2 uv_MainTex;
+            float3 worldPos;
             float4 screenPos;
             float eyeDepth;
         };
 
         half _Glossiness;
         half _Metallic;
-        fixed4 _Color;
+        fixed4 _ColorSurface;
+        fixed4 _ColorSeabed;
+        float _WaterDensity;
+        sampler2D _WaterColorsAlbedoTex;
 
         sampler2D _CameraDepthTexture;
 
@@ -49,26 +53,32 @@ Shader "Custom/WaterShader"
 
         void surf (Input IN, inout SurfaceOutputStandard o)
         {
-            // Albedo comes from a texture tinted by color
-            fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
-            o.Albedo = c.rgb;
+
+            // TODO: RENAME CAMEL CASE TO UNDERSCORES!!!
 
             // Metallic and smoothness come from slider variables
             o.Metallic = _Metallic;
             o.Smoothness = _Glossiness;
-            
-            o.Alpha = c.a;
-
-            // Test: depth texture
-            // TODO
  
+            // Calculate ocean depth
             float2 screenSpaceUV = IN.screenPos.xy / IN.screenPos.w;
 
-            float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenSpaceUV);
-            depth = Linear01Depth(depth);
+            float sceneDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenSpaceUV);
+            sceneDepth = Linear01Depth(sceneDepth)  // get linear depth
+                    * _ProjectionParams.z;          // camera's far plane in world space
+            
+            // if (sceneDepth > _ProjectionParams.z - 1.0) discard;
+                    
+            float3 cameraToWaterSurface = IN.worldPos - _WorldSpaceCameraPos;
 
-            o.Albedo = float3(depth, depth, depth);
-            o.Alpha = 1.0;
+            float oceanDepth = sceneDepth - length(cameraToWaterSurface);
+
+            // Albedo
+            // Mix colors based on the ocean depth
+            float sample_point_x = clamp(oceanDepth / _WaterDensity, 0.0, 1.0);   // normalize ocean depth with water density
+
+            o.Albedo = tex2D(_WaterColorsAlbedoTex, float2(sample_point_x, 0)).rgb;
+            o.Alpha = 0.9;
         }
         ENDCG
     }

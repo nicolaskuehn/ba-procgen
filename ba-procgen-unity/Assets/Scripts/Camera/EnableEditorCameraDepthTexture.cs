@@ -19,9 +19,6 @@ namespace ProcGen.Camera
                 editorCamera.depthTextureMode = DepthTextureMode.Depth;
         }
 
-        // TODO: 
-        // - Rename script
-        // - adjust camera view frustum to see if this fixes depth map resolution (only black and white)
-        // - increase buffer size in project settings
+        // TODO: only do this initially
     }
 }

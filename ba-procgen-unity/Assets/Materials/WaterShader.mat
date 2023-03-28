@@ -24,6 +24,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _OceanFlipbookNormalTex:
+        m_Texture: {fileID: 2800000, guid: 2a8fe44d4fad57e4283ace1e687d5e59, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _WaterColorsAlbedoTex:
         m_Texture: {fileID: 2800000, guid: ca538dd7bdb6cd64ea3d5929824a3d66, type: 3}
         m_Scale: {x: 1, y: 1}

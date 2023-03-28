@@ -3,6 +3,8 @@ Shader "Custom/WaterShader"
     Properties
     {
         _WaterColorsAlbedoTex ("Water Color Gradient", 2D) = "blue" {}
+        _OceanFlipbookNormalTex ("Ocean Normal Map (Flipbook)", 2D) = "bump" {}
+
         _WaterDensity ("Water Density", Range(0,10)) = 5
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Metallic ("Metallic", Range(0,1)) = 0.0
@@ -28,7 +30,7 @@ Shader "Custom/WaterShader"
 
         struct Input
         {
-            float2 uv_MainTex;
+            float2 uv_OceanFlipbookNormalTex : TEXCOORD0;
             float3 worldPos;
             float4 screenPos;
             float eyeDepth;
@@ -39,7 +41,9 @@ Shader "Custom/WaterShader"
         fixed4 _ColorSurface;
         fixed4 _ColorSeabed;
         float _WaterDensity;
+
         sampler2D _WaterColorsAlbedoTex;
+        sampler2D _OceanFlipbookNormalTex;
 
         sampler2D _CameraDepthTexture;
 
@@ -53,8 +57,7 @@ Shader "Custom/WaterShader"
 
         void surf (Input IN, inout SurfaceOutputStandard o)
         {
-
-            // TODO: RENAME CAMEL CASE TO UNDERSCORES!!!
+            // TODO: RENAME CAMEL CASE TO UNDERSCORES!!! (shader code convention)
 
             // Metallic and smoothness come from slider variables
             o.Metallic = _Metallic;
@@ -79,6 +82,9 @@ Shader "Custom/WaterShader"
 
             o.Albedo = tex2D(_WaterColorsAlbedoTex, float2(sample_point_x, 0)).rgb;
             o.Alpha = 0.9;
+
+            // Test NormalMap
+            o.Normal = UnpackNormal(tex2D(_OceanFlipbookNormalTex, IN.uv_OceanFlipbookNormalTex));
         }
         ENDCG
     }

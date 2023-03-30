@@ -43,13 +43,14 @@ Material:
     - _OceanTiling: 4
     m_Floats:
     - _DepthTreshold: 0.044
-    - _Glossiness: 0.786
+    - _Glossiness: 0.942
     - _Metallic: 0.037
     - _OceanTiling: 7
-    - _WaterDensity: 0.44
+    - _WaterDensity: 0.31
+    - _WaterFogDensity: 5.68
     - _WaveScale: 0.6
     m_Colors:
-    - _Color: {r: 0, g: 0.7019608, b: 1, a: 0.69803923}
+    - _Color: {r: 0, g: 0.6128311, b: 1, a: 1}
     - _ColorSeabed: {r: 0.13216448, g: 0.13216448, b: 0.2830189, a: 1}
     - _ColorSurface: {r: 0, g: 0.5171318, b: 1, a: 1}
   m_BuildTextureStacks: []

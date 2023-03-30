@@ -2,19 +2,18 @@ Shader "Custom/WaterShader"
 {
     Properties
     {
+        _Glossiness ("Smoothness", Range(0,1)) = 0.5
+        _Metallic ("Metallic", Range(0,1)) = 0.0
+
         _WaterColorsAlbedoTex ("Water Color Gradient", 2D) = "blue" {}
         _OceanFlipbookNormalTex ("Ocean Normal Map (Flipbook)", 2D) = "bump" {} // TODO: CHECK COMPRESSION IN UNITY EDITOR
         _OceanFlipbookLength1D ("Ocean Flipbook Frame Count 1D", Integer) = 8
         _OceanFlipbookFramerate ("Framerate of the Ocean Flipbook Animation", Integer) = 10
-        _OceanTiling ("Tiling of the ocean textures", Range(0,12)) = 4
+        _OceanTiling ("Tiling of the ocean textures", Range(0,20)) = 10
         _WaveScale ("Scales the height of the waves", Range(0,2)) = 1
-        
-        // TODO: REMOVE (DEBUG)
-        _TestFlipbookTex ("Debug Flipbook Texture", 2D) = "white" {}
 
-        _WaterDensity ("Water Density", Range(0,10)) = 5
-        _Glossiness ("Smoothness", Range(0,1)) = 0.5
-        _Metallic ("Metallic", Range(0,1)) = 0.0
+        _WaterDensity ("Water Density", Range(0,10)) = 5.0
+        _WaterFogDensity ("Water Fog Density", Range(0,10)) = 1.0
     }
     SubShader
     {
@@ -26,9 +25,11 @@ Shader "Custom/WaterShader"
         // Enable regular alpha blending
         Blend SrcAlpha OneMinusSrcAlpha
 
+        GrabPass { "_OceanGround" }
+
         CGPROGRAM
         // Physically based Standard lighting model, and enable shadows on all light types
-        #pragma surface surf Standard fullforwardshadows alpha:fade
+        #pragma surface surf Standard alpha // alpha:fade fullforwardshadows
 
         // Use shader model 3.0 target, to get nicer looking lighting
         #pragma target 3.0
@@ -37,6 +38,7 @@ Shader "Custom/WaterShader"
 
         struct Input
         {
+            float2 uv_MainTex;
             float2 uv_OceanFlipbookNormalTex : TEXCOORD0;
             float3 worldPos;
             float4 screenPos;
@@ -45,10 +47,9 @@ Shader "Custom/WaterShader"
 
         half _Glossiness;
         half _Metallic;
-        fixed4 _ColorSurface;
-        fixed4 _ColorSeabed;
         
         float _WaterDensity;
+        float _WaterFogDensity;
         float _WaveScale;
         float _OceanTiling;
 
@@ -62,7 +63,9 @@ Shader "Custom/WaterShader"
         // TODO: REMOVE (DEBUG)
         sampler2D _TestFlipbookTex;
 
+        sampler2D _OceanGround;
         sampler2D _CameraDepthTexture;
+
 
 
         // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
@@ -113,11 +116,21 @@ Shader "Custom/WaterShader"
             // Albedo
             // Mix colors based on the ocean depth
             float transmission = exp(-_WaterDensity * oceanDepth);
-            o.Alpha = map(0.0, 1.0, 0.75, 1.0, 1.0 - transmission); // TODO: Add fresnel effect
             
             float sample_point_x = clamp(1.0 - transmission, 0.0, 1.0);   // Sample gradient texture based on transmission
-            o.Albedo = tex2D(_WaterColorsAlbedoTex, float2(sample_point_x, 0)).rgb;
+            float3 waterColor = tex2D(_WaterColorsAlbedoTex, float2(sample_point_x, 0)).rgb;
             
+            float3 oceanGroundColor = tex2D(_OceanGround, screenSpaceUV).rgb;
+
+            float fogFactor = exp2(-_WaterFogDensity * oceanDepth);
+
+            o.Albedo = lerp(waterColor, oceanGroundColor, fogFactor); // TODO: dont show oceanGround completely! (see edges)
+
+            // Alpha
+            o.Alpha = map(0.0, 1.0, 0.75, 1.0, 1.0 - transmission);
+
+
+            // Normal
             float frame = _Time.y * _OceanFlipbookFramerate;
             
             int frameBefore = floor(frame);
@@ -135,12 +148,8 @@ Shader "Custom/WaterShader"
             normal.xy *= _WaveScale;
             
             o.Normal = normalize(normal);
-
-            // o.Albedo = step(oceanDepth, _DepthTreshold);
-
-            //o.Albedo = float3(oceanDepth, oceanDepth, oceanDepth);
         }
         ENDCG
     }
-    FallBack "Diffuse"
+    //FallBack "Diffuse"
 }

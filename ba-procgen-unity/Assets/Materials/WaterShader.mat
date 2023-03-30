@@ -28,15 +28,26 @@ Material:
         m_Texture: {fileID: 2800000, guid: 2a8fe44d4fad57e4283ace1e687d5e59, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _TestFlipbookTex:
+        m_Texture: {fileID: 2800000, guid: b36876d73f3992e4aa28fbe1d6ffe64b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _WaterColorsAlbedoTex:
         m_Texture: {fileID: 2800000, guid: ca538dd7bdb6cd64ea3d5929824a3d66, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    m_Ints: []
+    m_Ints:
+    - _OceanFlipbookFrameCount: 64
+    - _OceanFlipbookFramerate: 10
+    - _OceanFlipbookLength1D: 8
+    - _OceanTiling: 4
     m_Floats:
-    - _Glossiness: 0.907
-    - _Metallic: 0.021
-    - _WaterDensity: 3.35
+    - _DepthTreshold: 0.044
+    - _Glossiness: 0.786
+    - _Metallic: 0.037
+    - _OceanTiling: 7
+    - _WaterDensity: 0.44
+    - _WaveScale: 0.6
     m_Colors:
     - _Color: {r: 0, g: 0.7019608, b: 1, a: 0.69803923}
     - _ColorSeabed: {r: 0.13216448, g: 0.13216448, b: 0.2830189, a: 1}

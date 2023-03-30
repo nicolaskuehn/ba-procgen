@@ -3,7 +3,14 @@ Shader "Custom/WaterShader"
     Properties
     {
         _WaterColorsAlbedoTex ("Water Color Gradient", 2D) = "blue" {}
-        _OceanFlipbookNormalTex ("Ocean Normal Map (Flipbook)", 2D) = "bump" {}
+        _OceanFlipbookNormalTex ("Ocean Normal Map (Flipbook)", 2D) = "bump" {} // TODO: CHECK COMPRESSION IN UNITY EDITOR
+        _OceanFlipbookLength1D ("Ocean Flipbook Frame Count 1D", Integer) = 8
+        _OceanFlipbookFramerate ("Framerate of the Ocean Flipbook Animation", Integer) = 10
+        _OceanTiling ("Tiling of the ocean textures", Range(0,12)) = 4
+        _WaveScale ("Scales the height of the waves", Range(0,2)) = 1
+        
+        // TODO: REMOVE (DEBUG)
+        _TestFlipbookTex ("Debug Flipbook Texture", 2D) = "white" {}
 
         _WaterDensity ("Water Density", Range(0,10)) = 5
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
@@ -40,10 +47,20 @@ Shader "Custom/WaterShader"
         half _Metallic;
         fixed4 _ColorSurface;
         fixed4 _ColorSeabed;
+        
         float _WaterDensity;
+        float _WaveScale;
+        float _OceanTiling;
+
+        float _DepthTreshold;
 
         sampler2D _WaterColorsAlbedoTex;
         sampler2D _OceanFlipbookNormalTex;
+        int _OceanFlipbookLength1D;
+        int _OceanFlipbookFramerate;
+
+        // TODO: REMOVE (DEBUG)
+        sampler2D _TestFlipbookTex;
 
         sampler2D _CameraDepthTexture;
 
@@ -55,36 +72,73 @@ Shader "Custom/WaterShader"
             // put more per-instance properties here
         UNITY_INSTANCING_BUFFER_END(Props)
 
+        // Helper functions
+        float map (float a_min, float a_max, float b_min, float b_max, float t) {
+            return min(max((t - a_min) * (b_max - b_min) / (a_max - a_min) + b_min, b_min), b_max);
+        } 
+
+        float2 calculateFlipbookUV(int frame, float2 uv) {
+            int row = frame / _OceanFlipbookLength1D;
+            int col = frame - row * _OceanFlipbookLength1D;
+
+            float tileUVSize1D = 1.0 / _OceanFlipbookLength1D;
+
+            float2 currentFrameMin = float2(tileUVSize1D * col, 1 - tileUVSize1D * (row + 1));
+            float2 currentFrameMax = float2(tileUVSize1D * (col + 1), 1 - tileUVSize1D * row);
+            
+            return lerp(currentFrameMin, currentFrameMax, uv);
+        }
+
         void surf (Input IN, inout SurfaceOutputStandard o)
         {
             // TODO: RENAME CAMEL CASE TO UNDERSCORES!!! (shader code convention)
-
+            
             // Metallic and smoothness come from slider variables
             o.Metallic = _Metallic;
             o.Smoothness = _Glossiness;
  
             // Calculate ocean depth
             float2 screenSpaceUV = IN.screenPos.xy / IN.screenPos.w;
-
-            float sceneDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenSpaceUV);
-            sceneDepth = Linear01Depth(sceneDepth)  // get linear depth
-                    * _ProjectionParams.z;          // camera's far plane in world space
             
-            // if (sceneDepth > _ProjectionParams.z - 1.0) discard;
-                    
-            float3 cameraToWaterSurface = IN.worldPos - _WorldSpaceCameraPos;
+            float groundDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenSpaceUV);
+            
+            groundDepth = Linear01Depth(groundDepth)  // get linear depth
+                         * _ProjectionParams.z;       // camera's far plane in world space
+            
+            float waterSurfaceDepth = IN.screenPos.w;
 
-            float oceanDepth = sceneDepth - length(cameraToWaterSurface);
+            float oceanDepth = groundDepth - waterSurfaceDepth;
+
 
             // Albedo
             // Mix colors based on the ocean depth
-            float sample_point_x = clamp(oceanDepth / _WaterDensity, 0.0, 1.0);   // normalize ocean depth with water density
-
+            float transmission = exp(-_WaterDensity * oceanDepth);
+            o.Alpha = map(0.0, 1.0, 0.75, 1.0, 1.0 - transmission); // TODO: Add fresnel effect
+            
+            float sample_point_x = clamp(1.0 - transmission, 0.0, 1.0);   // Sample gradient texture based on transmission
             o.Albedo = tex2D(_WaterColorsAlbedoTex, float2(sample_point_x, 0)).rgb;
-            o.Alpha = 0.9;
+            
+            float frame = _Time.y * _OceanFlipbookFramerate;
+            
+            int frameBefore = floor(frame);
+            int frameAfter = frameBefore + 1;
 
-            // Test NormalMap
-            o.Normal = UnpackNormal(tex2D(_OceanFlipbookNormalTex, IN.uv_OceanFlipbookNormalTex));
+            float2 tiledUV = frac(IN.uv_OceanFlipbookNormalTex * _OceanTiling);
+
+            float2 frameBeforeUV = calculateFlipbookUV(frameBefore, tiledUV);
+            float2 frameAfterUV = calculateFlipbookUV(frameAfter, tiledUV);
+
+            float3 normalBefore = UnpackNormal(tex2D(_OceanFlipbookNormalTex, frameBeforeUV));
+            float3 normalAfter = UnpackNormal(tex2D(_OceanFlipbookNormalTex, frameAfterUV));
+
+            float3 normal = lerp(normalBefore, normalAfter, frac(frame)); 
+            normal.xy *= _WaveScale;
+            
+            o.Normal = normalize(normal);
+
+            // o.Albedo = step(oceanDepth, _DepthTreshold);
+
+            //o.Albedo = float3(oceanDepth, oceanDepth, oceanDepth);
         }
         ENDCG
     }

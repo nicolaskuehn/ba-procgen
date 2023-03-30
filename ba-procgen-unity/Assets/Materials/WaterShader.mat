@@ -45,10 +45,10 @@ Material:
     - _DepthTreshold: 0.044
     - _Glossiness: 0.942
     - _Metallic: 0.037
-    - _OceanTiling: 7
-    - _WaterDensity: 0.31
-    - _WaterFogDensity: 5.68
-    - _WaveScale: 0.6
+    - _OceanTiling: 16.35
+    - _WaterDensity: 2.19
+    - _WaterFogDensity: 7.8
+    - _WaveScale: 0.478
     m_Colors:
     - _Color: {r: 0, g: 0.6128311, b: 1, a: 1}
     - _ColorSeabed: {r: 0.13216448, g: 0.13216448, b: 0.2830189, a: 1}

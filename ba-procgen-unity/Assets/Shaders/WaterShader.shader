@@ -14,6 +14,12 @@ Shader "Custom/WaterShader"
 
         _WaterDensity ("Water Density", Range(0,10)) = 5.0
         _WaterFogDensity ("Water Fog Density", Range(0,10)) = 1.0
+
+        _FoamNoiseTex ("Foam Noise Texture", 2D) = "white" {}
+        _FoamScale ("Foam Scale", Range(0,5.0)) = 3.0
+        _FoamAlpha ("Foam Alpha", Range(0,1.0)) = 0.5
+        _FoamTreshold ("Foam Treshold", Range(0,0.1)) = 0.04
+        _FoamFade ("Foam Fade", Range(0,0.5)) = 0.1
     }
     SubShader
     {
@@ -40,6 +46,7 @@ Shader "Custom/WaterShader"
         {
             float2 uv_MainTex;
             float2 uv_OceanFlipbookNormalTex : TEXCOORD0;
+            float2 uv_FoamNoiseTex;
             float3 worldPos;
             float4 screenPos;
             float eyeDepth;
@@ -54,6 +61,12 @@ Shader "Custom/WaterShader"
         float _OceanTiling;
 
         float _DepthTreshold;
+        
+        sampler2D _FoamNoiseTex;
+        float _FoamScale;
+        float _FoamAlpha;
+        float _FoamTreshold;
+        float _FoamFade;
 
         sampler2D _WaterColorsAlbedoTex;
         sampler2D _OceanFlipbookNormalTex;
@@ -113,7 +126,7 @@ Shader "Custom/WaterShader"
             float oceanDepth = groundDepth - waterSurfaceDepth;
 
 
-            // Albedo
+            // ... Albedo ... //
             // Mix colors based on the ocean depth
             float transmission = exp(-_WaterDensity * oceanDepth);
             
@@ -124,13 +137,26 @@ Shader "Custom/WaterShader"
 
             float fogFactor = exp2(-_WaterFogDensity * oceanDepth);
 
-            o.Albedo = lerp(waterColor, oceanGroundColor, fogFactor); // TODO: dont show oceanGround completely! (see edges)
+            float3 oceanColor = lerp(waterColor, oceanGroundColor, fogFactor); // TODO: dont show oceanGround completely! (see edges)
 
-            // Alpha
-            o.Alpha = map(0.0, 1.0, 0.75, 1.0, 1.0 - transmission);
+            // Foam
+            float foamMask = smoothstep(_FoamTreshold + _FoamFade, _FoamTreshold, oceanDepth);            
+            float3 foamColor = float3(1.0, 1.0, 1.0);
+            
+            // Final albedo color
+            o.Albedo = lerp(oceanColor, foamColor, foamMask);
 
 
-            // Normal
+            // ... Alpha ... //
+            float oceanAlpha = map(0.0, 1.0, 0.75, 1.0, 1.0 - transmission);
+
+            float foamMix = tex2D(_FoamNoiseTex, IN.uv_FoamNoiseTex * 10.0 * _FoamScale);
+            float distortedFoamMask = step(foamMix, foamMask);
+
+            o.Alpha = lerp(oceanAlpha, _FoamAlpha, distortedFoamMask);
+
+
+            // ... Normal ... //
             float frame = _Time.y * _OceanFlipbookFramerate;
             
             int frameBefore = floor(frame);

@@ -16,10 +16,14 @@ Shader "Custom/WaterShader"
         _WaterFogDensity ("Water Fog Density", Range(0,10)) = 1.0
 
         _FoamNoiseTex ("Foam Noise Texture", 2D) = "white" {}
-        _FoamScale ("Foam Scale", Range(0,5.0)) = 3.0
         _FoamAlpha ("Foam Alpha", Range(0,1.0)) = 0.5
-        _FoamTreshold ("Foam Treshold", Range(0,0.1)) = 0.04
-        _FoamFade ("Foam Fade", Range(0,0.5)) = 0.1
+        _FoamOffset ("Foam Offset", Range(0,1.0)) = 0.05
+        _FoamFrequency ("Foam Frequency", Range(0,100.0)) = 75.0
+        _FoamSpread ("Foam Spread", Range(0,0.5)) = 0.2
+        _FoamFade ("Foam Fade", Range(0.0,0.1)) = 0.06
+        _FoamWaveSpeed ("Foam Wave Speed", Range(0.0,2.0)) = 1.2
+        _FoamWaveFrequency ("Foam Wave Frequency", Range(0.0,200.0)) = 100.0
+        _FoamWaveStrength ("Foam Wave Strength", Range(0.0,0.5)) = 0.03
     }
     SubShader
     {
@@ -39,6 +43,8 @@ Shader "Custom/WaterShader"
 
         // Use shader model 3.0 target, to get nicer looking lighting
         #pragma target 3.0
+
+        #define TAU 6.28318530718
 
         sampler2D _MainTex;
 
@@ -63,10 +69,14 @@ Shader "Custom/WaterShader"
         float _DepthTreshold;
         
         sampler2D _FoamNoiseTex;
-        float _FoamScale;
         float _FoamAlpha;
-        float _FoamTreshold;
+        float _FoamOffset;
+        float _FoamFrequency;
+        float _FoamSpread;
         float _FoamFade;
+        float _FoamWaveSpeed;
+        float _FoamWaveFrequency;
+        float _FoamWaveStrength;
 
         sampler2D _WaterColorsAlbedoTex;
         sampler2D _OceanFlipbookNormalTex;
@@ -140,20 +150,26 @@ Shader "Custom/WaterShader"
             float3 oceanColor = lerp(waterColor, oceanGroundColor, fogFactor); // TODO: dont show oceanGround completely! (see edges)
 
             // Foam
-            float foamMask = smoothstep(_FoamTreshold + _FoamFade, _FoamTreshold, oceanDepth);            
+            //float foamMask = smoothstep(_FoamTreshold + _FoamFade, _FoamTreshold, oceanDepth);
+            
+            float foamNoise = tex2D(_FoamNoiseTex, IN.uv_FoamNoiseTex * _FoamFrequency).r * 2.0 - 1.0; // [-1.0, 1.0]
+            float foamWavePhaseShift = (tex2D(_FoamNoiseTex, IN.uv_FoamNoiseTex * 2.0).r - 0.5) * 2.0 * TAU;
+            float foamSDF = -oceanDepth + _FoamOffset + _FoamSpread * foamNoise + sin(oceanDepth * _FoamWaveFrequency - _Time.y * _FoamWaveSpeed - foamWavePhaseShift) * _FoamWaveStrength;
             float3 foamColor = float3(1.0, 1.0, 1.0);
             
+            float3 foamMask = smoothstep(-_FoamFade, _FoamFade, foamSDF);
+
             // Final albedo color
             o.Albedo = lerp(oceanColor, foamColor, foamMask);
 
-
             // ... Alpha ... //
             float oceanAlpha = map(0.0, 1.0, 0.75, 1.0, 1.0 - transmission);
+            
+            o.Alpha = lerp(oceanAlpha, _FoamAlpha, foamMask);
 
-            float foamMix = tex2D(_FoamNoiseTex, IN.uv_FoamNoiseTex * 10.0 * _FoamScale);
-            float distortedFoamMask = step(foamMix, foamMask);
 
-            o.Alpha = lerp(oceanAlpha, _FoamAlpha, distortedFoamMask);
+            // ... Emission ... //
+            o.Emission = 0.3 * foamMask;
 
 
             // ... Normal ... //
@@ -171,7 +187,7 @@ Shader "Custom/WaterShader"
             float3 normalAfter = UnpackNormal(tex2D(_OceanFlipbookNormalTex, frameAfterUV));
 
             float3 normal = lerp(normalBefore, normalAfter, frac(frame)); 
-            normal.xy *= _WaveScale;
+            normal.xy *= _WaveScale * saturate(oceanDepth * 3.0 - 0.3);
             
             o.Normal = normalize(normal);
         }

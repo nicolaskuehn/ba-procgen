@@ -47,9 +47,16 @@ Material:
     - _OceanTiling: 4
     m_Floats:
     - _DepthTreshold: 0.044
-    - _FoamAlpha: 0.67
-    - _FoamFade: 0.068
+    - _FoamAlpha: 0.8
+    - _FoamFade: 0.06
+    - _FoamFrequency: 75
+    - _FoamOffset: 0.05
+    - _FoamScale: 2.43
+    - _FoamSpread: 0.2
     - _FoamTreshold: 0.0194
+    - _FoamWaveFrequency: 100
+    - _FoamWaveSpeed: 1.2
+    - _FoamWaveStrength: 0.03
     - _Glossiness: 0.942
     - _Metallic: 0.037
     - _OceanTiling: 16.35

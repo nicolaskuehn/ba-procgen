@@ -8,10 +8,15 @@ Shader "Custom/TerrainShader"
 
         _MinHeight ("Min Height", Range(-10.0, 10.0)) = 0.0
         _MaxHeight ("Max Height", Range(0.0, 20.0)) = 4.0
+
         _WaterLevel ("Water Level", float) = 0.0
+        _BeachSize ("Beach Size", Range(0.0, 0.1)) = 0.015
+        _BeachFade ("Beach Fade", Range(0.0, 0.1)) = 0.07
+        
         _HeightColorsAlbedoTex ("Height Color Gradient", 2D) = "white" {}
         _HeightSmoothnessTex ("Height Smoothness Gradient", 2D) = "white" {}
         _SandColor ("Sand Color", Color) = (1.0,0.9,0.6,1.0)
+        
     }
     SubShader
     {
@@ -38,7 +43,11 @@ Shader "Custom/TerrainShader"
 
         float _MinHeight;
         float _MaxHeight;
+        
         float _WaterLevel;
+        float _BeachSize;
+        float _BeachFade;
+
         sampler2D _HeightColorsAlbedoTex;
         sampler2D _HeightSmoothnessTex;
         fixed4 _SandColor;
@@ -59,12 +68,15 @@ Shader "Custom/TerrainShader"
 
         void surf (Input IN, inout SurfaceOutputStandard o)
         {
+            // TODO: RENAME CAMEL CASE TO UNDERSCORES!!! (shader code convention)
+
             // Albedo comes from a texture tinted by color
             fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
             
             // Set color and smoothness dependant on height (from 2d gradient textures)
             float current_height = IN.worldPos.y;
-            uint above_water = step(_WaterLevel, current_height);
+            //uint above_water = step(_WaterLevel + _BeachSize, current_height);
+            float above_water = smoothstep(_WaterLevel + _BeachSize - _BeachFade, _WaterLevel + _BeachSize + _BeachFade, current_height);
             
             float sample_point_x = map(_MinHeight, _MaxHeight, 0.0, 1.0, current_height);
             
@@ -72,7 +84,8 @@ Shader "Custom/TerrainShader"
             fixed terrain_smoothness = tex2D(_HeightSmoothnessTex, float2(sample_point_x, 0)).r;
 
             // Set albedo (color) and smoothness
-            o.Albedo = above_water * terrain_color + (1.0 - above_water) * _SandColor;
+            o.Albedo = lerp(_SandColor, terrain_color, above_water);
+            
             o.Smoothness = terrain_smoothness;
             
             // Metallic comes from slider variable

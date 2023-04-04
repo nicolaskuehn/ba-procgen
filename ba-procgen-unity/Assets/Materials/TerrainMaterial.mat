@@ -38,6 +38,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _BeachFade: 0.07
+    - _BeachSize: 0.015
     - _Glossiness: 0.5
     - _MaxHeight: 4
     - _Metallic: 0

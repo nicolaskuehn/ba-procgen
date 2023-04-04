@@ -9,7 +9,7 @@ Shader "Custom/WaterShader"
         _OceanFlipbookNormalTex ("Ocean Normal Map (Flipbook)", 2D) = "bump" {} // TODO: CHECK COMPRESSION IN UNITY EDITOR
         _OceanFlipbookLength1D ("Ocean Flipbook Frame Count 1D", Integer) = 8
         _OceanFlipbookFramerate ("Framerate of the Ocean Flipbook Animation", Integer) = 10
-        _OceanTiling ("Tiling of the ocean textures", Range(0,20)) = 10
+        _OceanTiling ("Tiling of the ocean textures", Range(0,100)) = 35
         _WaveScale ("Scales the height of the waves", Range(0,2)) = 1
 
         _WaterDensity ("Water Density", Range(0,10)) = 5.0
@@ -152,7 +152,9 @@ Shader "Custom/WaterShader"
             // Foam
             //float foamMask = smoothstep(_FoamTreshold + _FoamFade, _FoamTreshold, oceanDepth);
             
-            float foamNoise = tex2D(_FoamNoiseTex, IN.uv_FoamNoiseTex * _FoamFrequency).r * 2.0 - 1.0; // [-1.0, 1.0]
+            float foamNoise =
+                (tex2D(_FoamNoiseTex, IN.uv_FoamNoiseTex * _FoamFrequency + _Time.y * float2(0.04151, -0.09213) * 0.2).r * 2.0 - 1.0) *        // [-1.0, 1.0]
+                (tex2D(_FoamNoiseTex, IN.uv_FoamNoiseTex * _FoamFrequency + _Time.y * float2(-0.09621, 0.06287) * 0.2).r * 2.0 - 1.0);        // [-1.0, 1.0]
             float foamWavePhaseShift = (tex2D(_FoamNoiseTex, IN.uv_FoamNoiseTex * 2.0).r - 0.5) * 2.0 * TAU;
             float foamSDF = -oceanDepth + _FoamOffset + _FoamSpread * foamNoise + sin(oceanDepth * _FoamWaveFrequency - _Time.y * _FoamWaveSpeed - foamWavePhaseShift) * _FoamWaveStrength;
             float3 foamColor = float3(1.0, 1.0, 1.0);

@@ -20,6 +20,7 @@ namespace ProcGen.Settings
 
         // Scene objects
         MeshGenerator meshGenerator;
+        VegetationDistributor vegetationDistributor;
 
         public void OnEnable()
         {
@@ -33,6 +34,12 @@ namespace ProcGen.Settings
             Octave defaultOctave = SettingsManager.Instance.HeightfieldCompositor.Octaves[0];
             foreach (Setting setting in defaultOctave.HeightfieldGenerator.Settings)
                 setting.valueChanged.AddListener(delegate { UpdateOctave(defaultOctave); });
+
+            // Get vegetation distributor from scene (when not already assigned)
+            if (vegetationDistributor == null)
+                vegetationDistributor = (VegetationDistributor)FindObjectOfType(typeof(VegetationDistributor));
+
+            vegetationDistributor.Init();
         }
 
         public override void OnInspectorGUI()
@@ -243,6 +250,17 @@ namespace ProcGen.Settings
             EditorGUILayout.LabelField($"Mesh generation run-time: {Statistics.TerrainGenerationTimeMilliseconds} ms", EditorStyles.label);
         }
 
+        private void DrawVegetationSettings()
+        {
+            if (!SettingsManager.Instance.MeshSettings.autoUpdate)
+            {
+                if (GUILayout.Button("Distribute Vegetation"))
+                {
+                    vegetationDistributor.DistributeVegetationOnTerrain();
+                }
+            }
+        }
+
         private void DrawEditor()
         {
             // ... Mesh Settings ... //
@@ -260,6 +278,14 @@ namespace ProcGen.Settings
 
             // Settings
             UpdateNoiseSettings();
+
+
+            // ... Space ... //
+            EditorGUILayout.Space();
+
+
+            // ... Vegetation Settings ... //
+            DrawVegetationSettings();
 
 
             // ... Space ... //

@@ -10,7 +10,7 @@ namespace ProcGen.Generation
         // ... Components ... //
 
         // Terrain
-        private GameObject terrainGO;
+        public GameObject terrainGO { get; private set; }
 
         // private Mesh terrainMesh;
         [SerializeField]

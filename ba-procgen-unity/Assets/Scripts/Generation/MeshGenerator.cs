@@ -360,7 +360,7 @@ namespace ProcGen.Generation
         private GameObject CreateSubmeshGameObject(Transform parent, Vector3 pos, Mesh mesh, Material material, int index)
         {
             // Create new game object and add necessary components
-            GameObject submesh = new GameObject($"Submesh {index}");
+            GameObject submesh = new GameObject($"Chunk {index}");
             submesh.transform.parent = parent;
             submesh.transform.position = pos;
             submesh.AddComponent<MeshFilter>();
@@ -375,6 +375,9 @@ namespace ProcGen.Generation
 
             // Assign material to mesh renderer
             submesh.GetComponent<MeshRenderer>().material = material;
+
+            // Add chunk behaviour
+            submesh.AddComponent<Chunk>();
 
             return submesh;
         }

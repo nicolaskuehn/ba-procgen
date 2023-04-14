@@ -50,6 +50,10 @@ namespace ProcGen.Settings
         private MeshSettings meshSettings;
         public MeshSettings MeshSettings => meshSettings;
 
+        [SerializeField]
+        private ChunkSettings chunkSettings;
+        public ChunkSettings ChunkSettings => chunkSettings;
+
         /*
         [Header("Mesh Settings")]
         // Determines the size (number of tiles/squares) of the mesh of the plane in x- and z-direction
@@ -92,6 +96,14 @@ namespace ProcGen.Settings
 
         // Level of the water plane
         public float waterLevel = 0.0f;
+    }
+    
+
+    [System.Serializable]
+    public class ChunkSettings
+    {
+        // Determines the resolution of the grid of the chunk
+        public int gridResolution = 16; // This means that the grid is gridResolution x gridResolution
     } 
 
 }

@@ -250,8 +250,37 @@ namespace ProcGen.Settings
             EditorGUILayout.LabelField($"Mesh generation run-time: {Statistics.TerrainGenerationTimeMilliseconds} ms", EditorStyles.label);
         }
 
+        private void DrawChunkSettings()
+        {
+            // Draw heading
+            EditorGUILayout.LabelField("Chunk Settings", EditorStyles.boldLabel);
+
+            bool origDrawChunkBounds = SettingsManager.Instance.ChunkSettings.drawChunkBounds;
+            SettingsManager.Instance.ChunkSettings.drawChunkBounds = EditorGUILayout.Toggle("Draw Chunk Bounds", SettingsManager.Instance.ChunkSettings.drawChunkBounds);
+
+            bool origDrawChunkGrid = SettingsManager.Instance.ChunkSettings.drawChunkGrid;
+            SettingsManager.Instance.ChunkSettings.drawChunkGrid = EditorGUILayout.Toggle("Draw Chunk Grid", SettingsManager.Instance.ChunkSettings.drawChunkGrid);
+
+            // Re-draw gizmos if chunk settings (regarding gizmos display) changes
+            bool redrawGizmos = false;
+
+            if (origDrawChunkBounds != SettingsManager.Instance.ChunkSettings.drawChunkBounds)
+                redrawGizmos = true;
+
+            if (origDrawChunkGrid != SettingsManager.Instance.ChunkSettings.drawChunkGrid)
+                redrawGizmos = true;
+
+
+            if (redrawGizmos)
+                SceneView.RepaintAll();
+
+        }
+
         private void DrawVegetationSettings()
         {
+            // Draw heading
+            EditorGUILayout.LabelField("Vegetation Settings", EditorStyles.boldLabel);
+
             if (!SettingsManager.Instance.MeshSettings.autoUpdate)
             {
                 if (GUILayout.Button("Distribute Vegetation"))
@@ -278,6 +307,14 @@ namespace ProcGen.Settings
 
             // Settings
             UpdateNoiseSettings();
+
+
+            // ... Space ... //
+            EditorGUILayout.Space();
+
+
+            // ... Chunk Settings ... //
+            DrawChunkSettings();
 
 
             // ... Space ... //

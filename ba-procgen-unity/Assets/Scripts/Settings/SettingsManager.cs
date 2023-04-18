@@ -102,8 +102,14 @@ namespace ProcGen.Settings
     [System.Serializable]
     public class ChunkSettings
     {
-        // Determines the resolution of the grid of the chunk
-        public int gridResolution = 16; // This means that the grid is gridResolution x gridResolution
+        // Determines the size of each grid cell in the chunk
+        public int gridCellSize = 1;
+
+        // Can be toggled to visualize the chunks/bounds of the chunks
+        public bool drawChunkBounds = false;
+
+        // Can be toggled to visualize the grid (cells) of the chunks
+        public bool drawChunkGrid = false;
     } 
 
 }

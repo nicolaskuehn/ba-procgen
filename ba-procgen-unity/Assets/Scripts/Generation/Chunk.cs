@@ -39,6 +39,9 @@ namespace ProcGen.Generation
         [DrawGizmo(GizmoType.Selected | GizmoType.NonSelected)]
         static void DrawGizmosForChunk(Chunk chunk, GizmoType gizmoType)
         {
+            // Only draw gizmos if chunk (especially the grid is initialized)
+            if (chunk.grid == null) return; // TODO: Move guard clause to DrawGrid() call below
+
             if (SettingsManager.Instance.ChunkSettings.drawChunkBounds)
                 chunk.DrawBounds();
 

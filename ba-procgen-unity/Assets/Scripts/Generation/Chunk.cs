@@ -10,14 +10,23 @@ namespace ProcGen.Generation
         // ... Attributes ... //
         private int chunkSize;
 
-        private GridCellData[] grid;
-        private int gridCellSize;
-        private int gridCellCount1D;
+        public GridCellData[] Grid { get; private set; }
+        public int GridCellSize { get; private set; }
+        public int GridCellCount1D { get; private set; }
+
+
+        private void Reset()
+        {
+            Init();
+        }
 
         public void Init()
         {
+            // Only initialize grid if it has not been initialized yet
+            if (Grid != null) return;
+
             // Init grid
-            gridCellSize = SettingsManager.Instance.ChunkSettings.gridCellSize;
+            GridCellSize = SettingsManager.Instance.ChunkSettings.gridCellSize;
 
             const int MAX_SUBDIVISIONS_PER_MESH = 7;
             int subdivisions = SettingsManager.Instance.MeshSettings.subdivisions;
@@ -27,26 +36,30 @@ namespace ProcGen.Generation
                 : size / (1 << (subdivisions - MAX_SUBDIVISIONS_PER_MESH));   // size / chunkCount1D
 
 
-            gridCellCount1D = chunkSize / gridCellSize;
-            grid = new GridCellData[gridCellCount1D * gridCellCount1D];
+            GridCellCount1D = chunkSize / GridCellSize;
+            int gridCellsCount = GridCellCount1D * GridCellCount1D;
+            Grid = new GridCellData[gridCellsCount];
+
+            for (int i = 0; i < gridCellsCount; i++)
+            {
+                Grid[i] = new GridCellData();
+            }
         }
 
-        public GridCellData GetGridCellDataAtIndex(int index) => grid[index];
+        public GridCellData GetGridCellDataAtIndex(int index) => Grid[index];
 
-        public GridCellData GetGridCellDataAtCoords(int x, int y) => grid[y * gridCellCount1D + x];
+        public GridCellData GetGridCellDataAtCoords(int x, int z) => Grid[z * (GridCellCount1D - 1) + x];
 
-        // Gizmo renderer
-        [DrawGizmo(GizmoType.Selected | GizmoType.NonSelected)]
-        static void DrawGizmosForChunk(Chunk chunk, GizmoType gizmoType)
+        public Vector2 GridCoordsToWorld(int x, int z) => new Vector2(transform.position.x + x * GridCellSize, transform.position.z + z * GridCellSize);
+
+        // Render gizmos
+        private void OnDrawGizmos()
         {
-            // Only draw gizmos if chunk (especially the grid is initialized)
-            if (chunk.grid == null) return; // TODO: Move guard clause to DrawGrid() call below
-
             if (SettingsManager.Instance.ChunkSettings.drawChunkBounds)
-                chunk.DrawBounds();
+                DrawBounds();
 
             if (SettingsManager.Instance.ChunkSettings.drawChunkGrid)
-                chunk.DrawGrid();
+                DrawGrid();
         }
 
         // TODO: Set height of wired cube to average of the chunk
@@ -60,15 +73,18 @@ namespace ProcGen.Generation
         // TODO: Set height of wired cube to: 1. average of cell (4 corners average) or 2. height of center of the cell
         private void DrawGrid()
         {
+            // Only draw gizmos if the chunk's grid is initialized
+            if (Grid == null) return;
+
             Gizmos.color = Color.cyan;
 
-            for (int y = 0; y < gridCellCount1D; y++)
+            for (int y = 0; y < GridCellCount1D; y++)
             {
-                for (int x = 0; x < gridCellCount1D; x++)
+                for (int x = 0; x < GridCellCount1D; x++)
                 {
-                    float offset = gridCellSize;
+                    float offset = GridCellSize;
                     float halfOffset = offset / 2.0f;
-                    Vector3 cubeDimensions = new Vector3(gridCellSize, gridCellSize, gridCellSize);
+                    Vector3 cubeDimensions = new Vector3(GridCellSize, GridCellSize, GridCellSize);
                     Gizmos.DrawWireCube(transform.position + new Vector3(x * offset + halfOffset, 1.0f, y * offset + halfOffset), cubeDimensions);  // TODO: Optimize by caching vector
                 }
             }
@@ -78,12 +94,12 @@ namespace ProcGen.Generation
 
     }
 
-    public struct GridCellData
+    public class GridCellData
     {
-        public float DistributionProbability { get; } // TODO: Revise
+        public float DistributionProbability { get; private set; }  // TODO: Revise
         public bool HasModelPlaced { get; set; }
 
-        public GridCellData (float distributionProbability = 0.0f, bool hasModelPlaced = false)
+        public GridCellData (float distributionProbability = 0.1f, bool hasModelPlaced = false) // TODO: probability back to 0.0f!
         {
             DistributionProbability = distributionProbability;
             HasModelPlaced = hasModelPlaced;

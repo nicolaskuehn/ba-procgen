@@ -15,9 +15,6 @@ namespace ProcGen.Generation
         private Material treeMaterial;
         private List<Matrix4x4> treeMatrices = new List<Matrix4x4>();
 
-        [SerializeField]
-        private int tileGridResolution = 4;     // density has to be 
-
         private GameObject terrainGO;
 
         private void Awake()
@@ -27,7 +24,6 @@ namespace ProcGen.Generation
 
         private void Update()
         {
-            return; // TODO: remove return
             // Render vegetation
             if (treeMatrices.Count > 0)
                 RenderTrees();
@@ -39,35 +35,51 @@ namespace ProcGen.Generation
             terrainGO = FindFirstObjectByType<MeshGenerator>().terrainGO;
 
             if (terrainGO == null)
-                Debug.LogWarning("Could not find terrain game object in VegetationDistributor. Is there a MeshGenerator in the scene?");
+                Debug.LogWarning("Could not find terrain game object in VegetationDistributor. Is there a MeshGenerator in the scene and the terrain is generated?");
         }
 
         // Iterate over terrain and add vegetation
         public void DistributeVegetationOnTerrain()
         {
+            // Clear vegetation first
+            treeMatrices.Clear();
+
             // Iterate over each chunk to handle them separately
-            List<Transform> terrainChunks = transform.Cast<Transform>().ToList();
-            foreach (Transform chunk in terrainChunks)
+            List <Transform> terrainChunks = terrainGO.transform.Cast<Transform>().ToList();
+            foreach (Transform chunkTransform in terrainChunks)
             {
-                Vector3 center = chunk.position;    // origin of each tile is in the center
+                Chunk chunk = chunkTransform.GetComponent<Chunk>();
+
+                Vector3 center = chunkTransform.position;    // origin of each tile is in the center
                 int size = SettingsManager.Instance.MeshSettings.size;
 
                 // Iterate over all grid cells in tile
-                for (int z = Mathf.RoundToInt(center.z - size / 2.0f); z < Mathf.RoundToInt(center.z + size / 2.0f); z+= size / tileGridResolution)
+                for (int z = 0; z < chunk.GridCellCount1D; z++)
                 {
-                    for (int x = Mathf.RoundToInt(center.x - size / 2.0f); x < Mathf.RoundToInt(center.x + size / 2.0f); x += size / tileGridResolution)
+                    for (int x = 0; x < chunk.GridCellCount1D; x++)
                     {
-                        CalculateVegetation(x, z);
+                        Vector2 worldPos2D = chunk.GridCoordsToWorld(x, z);
+                        EvaluateVegetation(worldPos2D.x, worldPos2D.y, chunk.GetGridCellDataAtCoords(x, z));
                     }
                 }
             }
+
+            // Trigger rendering of scene view
+            UnityEditor.SceneView.RepaintAll();
         }
 
-        private void CalculateVegetation(float x, float z)   // TODO: Find better method name
+        private void EvaluateVegetation(float x, float z, GridCellData cellData)
         {
+            // Return if a model is already placed in this grid cell
+            if (cellData.HasModelPlaced) return;
+
             // Logic when to place what here:
-            if (Random.value < 0.1)     // DEBUG, TODO: Change
+            if (Random.value <= cellData.DistributionProbability)
+            {
                 InstantiateTree(x, z);
+                cellData.HasModelPlaced = true;
+                Debug.Log($"Instiated tree at ({x}, {z}).");
+            }
         }
 
         private void InstantiateTree(float x, float z)

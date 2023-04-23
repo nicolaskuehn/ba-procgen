@@ -377,7 +377,7 @@ namespace ProcGen.Generation
             submesh.GetComponent<MeshRenderer>().material = material;
 
             // Add chunk behaviour
-            submesh.AddComponent<Chunk>().Init();
+            submesh.AddComponent<Chunk>();
 
             return submesh;
         }

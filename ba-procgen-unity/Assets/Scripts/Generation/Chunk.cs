@@ -11,7 +11,7 @@ namespace ProcGen.Generation
         private int chunkSize;
 
         public GridCellData[] Grid { get; private set; }
-        public int GridCellSize { get; private set; }
+        public float GridCellSize { get; private set; }
         public int GridCellCount1D { get; private set; }
 
 
@@ -36,7 +36,7 @@ namespace ProcGen.Generation
                 : size / (1 << (subdivisions - MAX_SUBDIVISIONS_PER_MESH));   // size / chunkCount1D
 
 
-            GridCellCount1D = chunkSize / GridCellSize;
+            GridCellCount1D = Mathf.FloorToInt(chunkSize / GridCellSize);
             int gridCellsCount = GridCellCount1D * GridCellCount1D;
             Grid = new GridCellData[gridCellsCount];
 
@@ -99,7 +99,7 @@ namespace ProcGen.Generation
         public float DistributionProbability { get; private set; }  // TODO: Revise
         public bool HasModelPlaced { get; set; }
 
-        public GridCellData (float distributionProbability = 0.1f, bool hasModelPlaced = false) // TODO: probability back to 0.0f!
+        public GridCellData (float distributionProbability = 0.7f, bool hasModelPlaced = false) // TODO: probability back to 0.0f!
         {
             DistributionProbability = distributionProbability;
             HasModelPlaced = hasModelPlaced;

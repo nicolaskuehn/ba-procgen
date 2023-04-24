@@ -38,11 +38,34 @@ namespace ProcGen.Generation
                 Debug.LogWarning("Could not find terrain game object in VegetationDistributor. Is there a MeshGenerator in the scene and the terrain is generated?");
         }
 
+        private void ResetVegetationState()
+        {
+            // Clear instanced rendering queue (of model matrices)
+            treeMatrices.Clear();
+
+            // Reset grid cell state (especially HasModelPlaced property)
+            List<Transform> terrainChunks = terrainGO.transform.Cast<Transform>().ToList();
+            foreach (Transform chunkTransform in terrainChunks)
+            {
+                Chunk chunk = chunkTransform.GetComponent<Chunk>();
+
+                // Iterate over all grid cells in tile
+                for (int z = 0; z < chunk.GridCellCount1D; z++)
+                {
+                    for (int x = 0; x < chunk.GridCellCount1D; x++)
+                    {
+                        // Reset model placement marker of grid cell
+                        chunk.GetGridCellDataAtCoords(x, z).HasModelPlaced = false;
+                    }
+                }
+            }
+        }
+
         // Iterate over terrain and add vegetation
         public void DistributeVegetationOnTerrain()
         {
-            // Clear vegetation first
-            treeMatrices.Clear();
+            // Reset vegetation system state
+            ResetVegetationState();
 
             // Iterate over each chunk to handle them separately
             List <Transform> terrainChunks = terrainGO.transform.Cast<Transform>().ToList();
@@ -59,7 +82,13 @@ namespace ProcGen.Generation
                     for (int x = 0; x < chunk.GridCellCount1D; x++)
                     {
                         Vector2 worldPos2D = chunk.GridCoordsToWorld(x, z);
-                        EvaluateVegetation(worldPos2D.x, worldPos2D.y, chunk.GetGridCellDataAtCoords(x, z));
+                        float gridOffset = 0.5f * SettingsManager.Instance.ChunkSettings.gridCellSize;  // Used to offset position to cell center
+
+                        EvaluateVegetation(
+                            worldPos2D.x + gridOffset,
+                            worldPos2D.y + gridOffset,
+                            chunk.GetGridCellDataAtCoords(x, z)
+                        );
                     }
                 }
             }
@@ -80,16 +109,19 @@ namespace ProcGen.Generation
             // ... Logic when to place what here ... //
 
             // Do not place vegetation below water level
-            if (y < SettingsManager.Instance.MeshSettings.waterLevel) return;  
+            if (y < SettingsManager.Instance.MeshSettings.waterLevel) return; 
 
             // Decide if vegetation is placed based on the distribtution probability
             if (Random.value <= cellData.DistributionProbability)
             {
-                // TODO: Offset each tree randomly inside it's cell to break the visible grid pattern
-                InstantiateTree(new Vector3(x, y, z));
-                cellData.HasModelPlaced = true;
+                // Offset each tree randomly inside it's cell to break the visible grid pattern
+                float gridOffset = 0.5f * SettingsManager.Instance.ChunkSettings.gridCellSize;
+                float randomOffsetX = Random.Range(0.0f, gridOffset);
+                float randomOffsetZ = Random.Range(0.0f, gridOffset);
 
-                Debug.Log($"Instantiated tree at ({x}, {z}).");
+                // Spawn tree
+                InstantiateTree(new Vector3(x + randomOffsetX, y, z + randomOffsetZ));
+                cellData.HasModelPlaced = true;
             }
         }
 

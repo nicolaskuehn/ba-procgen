@@ -103,7 +103,7 @@ namespace ProcGen.Settings
     public class ChunkSettings
     {
         // Determines the size of each grid cell in the chunk
-        public int gridCellSize = 1;
+        public float gridCellSize = 1.0f;
 
         // Can be toggled to visualize the chunks/bounds of the chunks
         public bool drawChunkBounds = false;

@@ -73,23 +73,32 @@ namespace ProcGen.Generation
             // Return if a model is already placed in this grid cell
             if (cellData.HasModelPlaced) return;
 
-            // Logic when to place what here:
+            // Calculate height for given position (x, z)
+            float y = SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(x, z);
+
+
+            // ... Logic when to place what here ... //
+
+            // Do not place vegetation below water level
+            if (y < SettingsManager.Instance.MeshSettings.waterLevel) return;  
+
+            // Decide if vegetation is placed based on the distribtution probability
             if (Random.value <= cellData.DistributionProbability)
             {
-                InstantiateTree(x, z);
+                // TODO: Offset each tree randomly inside it's cell to break the visible grid pattern
+                InstantiateTree(new Vector3(x, y, z));
                 cellData.HasModelPlaced = true;
-                Debug.Log($"Instiated tree at ({x}, {z}).");
+
+                Debug.Log($"Instantiated tree at ({x}, {z}).");
             }
         }
 
-        private void InstantiateTree(float x, float z)
+        private void InstantiateTree(Vector3 pos)
         {
-            float y = 10.0f; // TODO: calculate y pos
-
             // Add tree to instanced rendering queue
             treeMatrices.Add(
                 Matrix4x4.TRS(
-                    new Vector3(x, y, z),       // Translation
+                    pos,                        // Translation
                     Quaternion.identity,        // Rotation
                     Vector3.one                 // Scale
                 )

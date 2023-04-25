@@ -11,7 +11,7 @@ namespace ProcGen.Generation
         private int chunkSize;
 
         public GridCellData[] Grid { get; private set; }
-        public float GridCellSize { get; private set; }
+        public float GridCellSize => SettingsManager.Instance.ChunkSettings.gridCellSize;
         public int GridCellCount1D { get; private set; }
 
 
@@ -26,8 +26,6 @@ namespace ProcGen.Generation
             if (Grid != null) return;
 
             // Init grid
-            GridCellSize = SettingsManager.Instance.ChunkSettings.gridCellSize;
-
             const int MAX_SUBDIVISIONS_PER_MESH = 7;
             int subdivisions = SettingsManager.Instance.MeshSettings.subdivisions;
             int size = SettingsManager.Instance.MeshSettings.size;
@@ -96,10 +94,10 @@ namespace ProcGen.Generation
 
     public class GridCellData
     {
-        public float DistributionProbability { get; private set; }  // TODO: Revise
+        public float DistributionProbability { get; set; }
         public bool HasModelPlaced { get; set; }
 
-        public GridCellData (float distributionProbability = 0.7f, bool hasModelPlaced = false) // TODO: probability back to 0.0f!
+        public GridCellData (float distributionProbability = 0.0f, bool hasModelPlaced = false)
         {
             DistributionProbability = distributionProbability;
             HasModelPlaced = hasModelPlaced;

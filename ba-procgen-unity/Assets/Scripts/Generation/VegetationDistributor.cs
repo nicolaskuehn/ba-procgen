@@ -38,7 +38,7 @@ namespace ProcGen.Generation
                 Debug.LogWarning("Could not find terrain game object in VegetationDistributor. Is there a MeshGenerator in the scene and the terrain is generated?");
         }
 
-        private void ResetVegetationState()
+        public void ResetVegetationState()
         {
             // Clear instanced rendering queue (of model matrices)
             treeMatrices.Clear();
@@ -64,11 +64,30 @@ namespace ProcGen.Generation
         // Iterate over terrain and add vegetation
         public void DistributeVegetationOnTerrain()
         {
+            // ... Setup ... //
             // Reset vegetation system state
             ResetVegetationState();
 
+            // Get all chunks
+            List<Transform> terrainChunks = terrainGO.transform.Cast<Transform>().ToList();
+
+
+            // ...  Calculate distribution probabilities ... //
+            // Iterate over each grid cell chunk by chunk
+            foreach (Transform chunkTransform in terrainChunks)
+            {
+                Chunk chunk = chunkTransform.GetComponent<Chunk>();
+
+                for (int i = 0; i < chunk.Grid.Length; i++)
+                {
+                    chunk.GetGridCellDataAtIndex(i).DistributionProbability = 1.0f;
+                }
+            }
+
+
+
+            // ... Evaluate vegetation ... //
             // Iterate over each chunk to handle them separately
-            List <Transform> terrainChunks = terrainGO.transform.Cast<Transform>().ToList();
             foreach (Transform chunkTransform in terrainChunks)
             {
                 Chunk chunk = chunkTransform.GetComponent<Chunk>();
@@ -132,21 +151,45 @@ namespace ProcGen.Generation
                 Matrix4x4.TRS(
                     pos,                        // Translation
                     Quaternion.identity,        // Rotation
-                    Vector3.one                 // Scale
+                    Vector3.one * 0.5f          // Scale
                 )
             );
         }
 
         public void RenderTrees()
         {
-            // TODO: Render all instanced trees in queue
-            Graphics.DrawMeshInstanced(
+            // Check if trees can be rendered in a single instanced draw call
+            if (treeMatrices.Count <= 1023)
+            {
+                Graphics.DrawMeshInstanced(
                     treeMesh,                   // mesh
                     0,                          // submeshIndex
                     treeMaterial,               // material
                     treeMatrices.ToArray(),     // matrices
                     treeMatrices.Count          // count
-            );
+                );
+
+                return;
+            }
+
+            // Otherwise draw meshes instanced in batches of 1023 (which is the max count)
+            for (int i = 0; i < Mathf.CeilToInt((float) treeMatrices.Count / 1023); i++)
+            {
+                int startIndex = i * 1023;
+                int count = Mathf.Min(treeMatrices.Count - startIndex, 1023);
+
+                //Debug.Log($"{treeMatrices.Count} - {startIndex} = {count}");
+
+                Matrix4x4[] currentBatchTreeMatrices = treeMatrices.GetRange(startIndex, count).ToArray();
+
+                Graphics.DrawMeshInstanced(
+                    treeMesh,                   // mesh
+                    0,                          // submeshIndex
+                    treeMaterial,               // material
+                    currentBatchTreeMatrices,   // matrices
+                    count                       // count
+                );
+            }
         }
     }
 }

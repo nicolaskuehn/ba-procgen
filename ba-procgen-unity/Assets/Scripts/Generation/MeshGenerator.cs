@@ -51,6 +51,14 @@ namespace ProcGen.Generation
             : _waterMeshRenderer;
 
 
+        // Others
+        private VegetationDistributor _vegetationDistributor;
+        private VegetationDistributor vegetationDistributor
+        {
+            get => _vegetationDistributor == null ? _vegetationDistributor = FindFirstObjectByType<VegetationDistributor>() : _vegetationDistributor;
+        }
+
+
         // ... Properties ... //
         // Number of faces
         public static int FaceCount1D => 1 << SettingsManager.Instance.MeshSettings.subdivisions;
@@ -125,6 +133,9 @@ namespace ProcGen.Generation
                 else
                     DestroyImmediate(child.gameObject);
             }
+
+            // Reset vegetation
+            vegetationDistributor.ResetVegetationState();
 
             int size = SettingsManager.Instance.MeshSettings.size;
             int subdivisions = SettingsManager.Instance.MeshSettings.subdivisions;
@@ -303,6 +314,9 @@ namespace ProcGen.Generation
 
         public void GenerateWaterMesh(float level)
         {
+            // Reset vegetation
+            vegetationDistributor.ResetVegetationState();
+
             // Create vertices
             Vector3[] vertices = new Vector3[4];
             vertices[0] = new Vector3(0, level, 0);

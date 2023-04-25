@@ -151,7 +151,7 @@ namespace ProcGen.Generation
                 Matrix4x4.TRS(
                     pos,                        // Translation
                     Quaternion.identity,        // Rotation
-                    Vector3.one * 0.5f          // Scale
+                    Vector3.one * 0.03f         // Scale
                 )
             );
         }

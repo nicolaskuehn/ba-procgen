@@ -255,6 +255,9 @@ namespace ProcGen.Settings
             // Draw heading
             EditorGUILayout.LabelField("Chunk Settings", EditorStyles.boldLabel);
 
+            float origgridCellSize = SettingsManager.Instance.ChunkSettings.gridCellSize;
+            SettingsManager.Instance.ChunkSettings.gridCellSize = EditorGUILayout.Slider("Grid Cell Size", SettingsManager.Instance.ChunkSettings.gridCellSize, 0.1f, 2.0f);
+
             bool origDrawChunkBounds = SettingsManager.Instance.ChunkSettings.drawChunkBounds;
             SettingsManager.Instance.ChunkSettings.drawChunkBounds = EditorGUILayout.Toggle("Draw Chunk Bounds", SettingsManager.Instance.ChunkSettings.drawChunkBounds);
 
@@ -263,6 +266,9 @@ namespace ProcGen.Settings
 
             // Re-draw gizmos if chunk settings (regarding gizmos display) changes
             bool redrawGizmos = false;
+
+            if (origgridCellSize != SettingsManager.Instance.ChunkSettings.gridCellSize)
+                redrawGizmos = true;
 
             if (origDrawChunkBounds != SettingsManager.Instance.ChunkSettings.drawChunkBounds)
                 redrawGizmos = true;

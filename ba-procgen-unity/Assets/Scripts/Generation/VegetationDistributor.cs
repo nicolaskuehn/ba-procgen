@@ -17,6 +17,9 @@ namespace ProcGen.Generation
 
         private GameObject terrainGO;
 
+        // Voronoi noise field to calculate vegetation distribution
+        private float[] distributionNoiseField;
+
         private void Awake()
         {
             Init();
@@ -59,8 +62,21 @@ namespace ProcGen.Generation
                     }
                 }
             }
+
+            // Clear distribution noise field
+            if (terrainChunks.Count > 0)
+            {
+                int gridCellCount1D = terrainChunks[0].GetComponent<Chunk>().GridCellCount1D;
+                distributionNoiseField = new float[terrainChunks.Count * (gridCellCount1D * gridCellCount1D)];  // TODO: Read from texture!
+            }
         }
 
+        
+        private float CalculateDistributionProbability(GridCellData cellData)
+        {
+            return Random.Range(0.0f, 1.0f);
+        }
+        
         // Iterate over terrain and add vegetation
         public void DistributeVegetationOnTerrain()
         {
@@ -80,7 +96,8 @@ namespace ProcGen.Generation
 
                 for (int i = 0; i < chunk.Grid.Length; i++)
                 {
-                    chunk.GetGridCellDataAtIndex(i).DistributionProbability = 1.0f;
+                    GridCellData cellData = chunk.GetGridCellDataAtIndex(i);
+                    cellData.DistributionProbability = CalculateDistributionProbability(cellData);
                 }
             }
 
@@ -128,7 +145,8 @@ namespace ProcGen.Generation
             // ... Logic when to place what here ... //
 
             // Do not place vegetation below water level
-            if (y < SettingsManager.Instance.MeshSettings.waterLevel) return; 
+            if (y < SettingsManager.Instance.MeshSettings.waterLevel) return;
+            if (y > 2.0f) return; // TODO: DEBUG REMOVE!
 
             // Decide if vegetation is placed based on the distribtution probability
             if (Random.value <= cellData.DistributionProbability)

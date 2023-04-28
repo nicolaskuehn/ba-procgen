@@ -167,9 +167,9 @@ namespace ProcGen.Generation
             // Add tree to instanced rendering queue
             treeMatrices.Add(
                 Matrix4x4.TRS(
-                    pos,                        // Translation
-                    Quaternion.identity,        // Rotation
-                    Vector3.one * 0.03f         // Scale
+                    pos,                                                        // Translation
+                    Quaternion.Euler(0.0f, Random.Range(0.0f, 360.0f), 0.0f),   // Rotation
+                    Vector3.one * 0.03f                                         // Scale
                 )
             );
         }

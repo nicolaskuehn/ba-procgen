@@ -15,10 +15,11 @@ namespace ProcGen.Generation
         private Material treeMaterial;
         private List<Matrix4x4> treeMatrices = new List<Matrix4x4>();
 
-        private GameObject terrainGO;
+        [SerializeField]
+        private Texture2D biomesTexture;
 
-        // Voronoi noise field to calculate vegetation distribution
-        private float[] distributionNoiseField;
+
+        private GameObject terrainGO;
 
         private void Awake()
         {
@@ -62,19 +63,53 @@ namespace ProcGen.Generation
                     }
                 }
             }
+        }
 
-            // Clear distribution noise field
-            if (terrainChunks.Count > 0)
+        private void LoadBiomeData()    // TODO: Call this method at the "right" place/moment
+        {
+            // Load biome data from texture (for each grid cell of each chunk)
+            List<Transform> terrainChunks = terrainGO.transform.Cast<Transform>().ToList();
+            foreach (Transform chunkTransform in terrainChunks)
             {
-                int gridCellCount1D = terrainChunks[0].GetComponent<Chunk>().GridCellCount1D;
-                distributionNoiseField = new float[terrainChunks.Count * (gridCellCount1D * gridCellCount1D)];  // TODO: Read from texture!
+                Chunk chunk = chunkTransform.GetComponent<Chunk>();
+
+                // Iterate over all grid cells in tile
+                for (int z = 0; z < chunk.GridCellCount1D; z++)
+                {
+                    for (int x = 0; x < chunk.GridCellCount1D; x++)
+                    {
+                        // ... Sample pixel of biomes texture that corresponds to the current grid cell ... //
+                        Vector2 worldPos = chunk.GridCoordsToWorld(x, z);
+
+                        float relativeX = worldPos.x / SettingsManager.Instance.MeshSettings.size;
+                        float relativeZ = worldPos.y / SettingsManager.Instance.MeshSettings.size;
+
+                        int pixelX = Mathf.FloorToInt(Mathf.Lerp(0.0f, biomesTexture.width, relativeX));
+                        int pixelZ = Mathf.FloorToInt(Mathf.Lerp(0.0f, biomesTexture.height, relativeZ));
+
+                        Color sampledPixel = biomesTexture.GetPixel(pixelX, pixelZ);     // TODO: Maybe use GetPixelData<>() for better performance?
+
+
+                        // ... Read and store data from sampled pixel ... //
+                        GridCellData data = chunk.GetGridCellDataAtCoords(x, z);
+
+                        // Get soil fertility value (Red channel)
+                        data.SoilFertility = sampledPixel.r;
+
+                        // Get climate value (Green channel)
+                        data.Climate = sampledPixel.g;
+
+                        // Debug.Log($"SF: {data.SoilFertility}, C: {data.Climate}");
+                    }
+                }
             }
         }
 
         
-        private float CalculateDistributionProbability(GridCellData cellData)
+        private void CalculateDistributionProbability(GridCellData cellData)   // TODO: Rename?
         {
-            return Random.Range(0.0f, 1.0f);
+            // Calculate expected value and standard deviation
+            // TODO
         }
         
         // Iterate over terrain and add vegetation
@@ -97,7 +132,7 @@ namespace ProcGen.Generation
                 for (int i = 0; i < chunk.Grid.Length; i++)
                 {
                     GridCellData cellData = chunk.GetGridCellDataAtIndex(i);
-                    cellData.DistributionProbability = CalculateDistributionProbability(cellData);
+                    CalculateDistributionProbability(cellData);
                 }
             }
 
@@ -149,7 +184,8 @@ namespace ProcGen.Generation
             if (y > 2.0f) return; // TODO: DEBUG REMOVE!
 
             // Decide if vegetation is placed based on the distribtution probability
-            if (Random.value <= cellData.DistributionProbability)
+            // TODO: Run random experiment with expected value and standard deviation and do poisson disk sampling afterwards
+            if (Random.value <= 0.5f/*cellData.DistributionProbability*/)
             {
                 // Offset each tree randomly inside it's cell to break the visible grid pattern
                 float gridOffset = 0.5f * SettingsManager.Instance.ChunkSettings.gridCellSize;

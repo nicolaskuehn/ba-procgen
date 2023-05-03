@@ -94,15 +94,27 @@ namespace ProcGen.Generation
 
     public class GridCellData
     {
-        public float DistributionProbability { get; set; }
+        public float SoilFertility { get; set; }
+        public float Climate { get; set; }
         public bool HasModelPlaced { get; set; }
 
-        public GridCellData (float distributionProbability = 0.0f, bool hasModelPlaced = false)
+        public float ExpectedValue { get; set; }
+        public float StandardDeviation { get; set; }
+
+        public GridCellData (float soilFertility = 0.0f, float climate = 0.0f, bool hasModelPlaced = false)
         {
-            DistributionProbability = distributionProbability;
+            // Biom data
+            SoilFertility = soilFertility;
+            Climate = climate;
+
+            // Stochastic data
+            ExpectedValue = 0.0f;
+            StandardDeviation = 0.0f;
+
+            // Miscellaneous data
             HasModelPlaced = hasModelPlaced;
         }
 
-        public override string ToString() => $"(DP: {DistributionProbability}, MP: {HasModelPlaced})";
+        public override string ToString() => $"Biom(SF: {SoilFertility}, C: {Climate}) - Stochastic(E: {ExpectedValue}, s: {StandardDeviation}) - Misc(MP: {HasModelPlaced})";
     }
 }

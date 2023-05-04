@@ -8,6 +8,8 @@ namespace ProcGen.Generation
     [ExecuteInEditMode]
     public class VegetationDistributor : MonoBehaviour
     {
+        private const int MAX_PLANTS_IN_GRID_CELL = 10;
+
         // TODO: Add tree struct with (mesh, material, matrices) for multiple tree types
         [SerializeField]
         private Mesh treeMesh;
@@ -54,6 +56,7 @@ namespace ProcGen.Generation
                 Chunk chunk = chunkTransform.GetComponent<Chunk>();
 
                 // Iterate over all grid cells in tile
+                /*
                 for (int z = 0; z < chunk.GridCellCount1D; z++)
                 {
                     for (int x = 0; x < chunk.GridCellCount1D; x++)
@@ -62,6 +65,7 @@ namespace ProcGen.Generation
                         chunk.GetGridCellDataAtCoords(x, z).HasModelPlaced = false;
                     }
                 }
+                */
             }
         }
 
@@ -104,14 +108,8 @@ namespace ProcGen.Generation
                 }
             }
         }
+        
 
-        
-        private void CalculateDistributionProbability(GridCellData cellData)   // TODO: Rename?
-        {
-            // Calculate expected value and standard deviation
-            // TODO
-        }
-        
         // Iterate over terrain and add vegetation
         public void DistributeVegetationOnTerrain()
         {
@@ -119,23 +117,13 @@ namespace ProcGen.Generation
             // Reset vegetation system state
             ResetVegetationState();
 
-            // Get all chunks
-            List<Transform> terrainChunks = terrainGO.transform.Cast<Transform>().ToList();
+            // Load biome data
+            LoadBiomeData();
 
 
             // ...  Calculate distribution probabilities ... //
-            // Iterate over each grid cell chunk by chunk
-            foreach (Transform chunkTransform in terrainChunks)
-            {
-                Chunk chunk = chunkTransform.GetComponent<Chunk>();
-
-                for (int i = 0; i < chunk.Grid.Length; i++)
-                {
-                    GridCellData cellData = chunk.GetGridCellDataAtIndex(i);
-                    CalculateDistributionProbability(cellData);
-                }
-            }
-
+            // Get all chunks
+            List<Transform> terrainChunks = terrainGO.transform.Cast<Transform>().ToList();
 
 
             // ... Evaluate vegetation ... //
@@ -155,7 +143,7 @@ namespace ProcGen.Generation
                         Vector2 worldPos2D = chunk.GridCoordsToWorld(x, z);
                         float gridOffset = 0.5f * SettingsManager.Instance.ChunkSettings.gridCellSize;  // Used to offset position to cell center
 
-                        EvaluateVegetation(
+                        DistributeVegetationInGridCell(
                             worldPos2D.x + gridOffset,
                             worldPos2D.y + gridOffset,
                             chunk.GetGridCellDataAtCoords(x, z)
@@ -168,16 +156,17 @@ namespace ProcGen.Generation
             UnityEditor.SceneView.RepaintAll();
         }
 
-        private void EvaluateVegetation(float x, float z, GridCellData cellData)
+        private void DistributeVegetationInGridCell(float centerX, float centerZ, GridCellData cellData)
         {
-            // Return if a model is already placed in this grid cell
-            if (cellData.HasModelPlaced) return;
-
+            // ... Calculate vegetation based on biome data ... //
             // Calculate height for given position (x, z)
-            float y = SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(x, z);
+            float y = SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(centerX, centerZ);
+
+            float PlantCount_ExpVal = Mathf.Lerp(0, MAX_PLANTS_IN_GRID_CELL, cellData.SoilFertility); // TODO: Add influence of height
+            float PlantCount_StdDev = Mathf.Exp( -24.0f * ((cellData.Climate - 0.5f) * (cellData.Climate - 0.5f)) ); // TODO: continue work
 
 
-            // ... Logic when to place what here ... //
+            // ... Plausability rules here ... //
 
             // Do not place vegetation below water level
             if (y < SettingsManager.Instance.MeshSettings.waterLevel) return;
@@ -185,7 +174,7 @@ namespace ProcGen.Generation
 
             // Decide if vegetation is placed based on the distribtution probability
             // TODO: Run random experiment with expected value and standard deviation and do poisson disk sampling afterwards
-            if (Random.value <= 0.5f/*cellData.DistributionProbability*/)
+            if (Random.value <= 0.5f)
             {
                 // Offset each tree randomly inside it's cell to break the visible grid pattern
                 float gridOffset = 0.5f * SettingsManager.Instance.ChunkSettings.gridCellSize;
@@ -193,8 +182,8 @@ namespace ProcGen.Generation
                 float randomOffsetZ = Random.Range(0.0f, gridOffset);
 
                 // Spawn tree
-                InstantiateTree(new Vector3(x + randomOffsetX, y, z + randomOffsetZ));
-                cellData.HasModelPlaced = true;
+                // TODO: Spawn multiple trees using poisson disc sampling
+                InstantiateTree(new Vector3(centerX + randomOffsetX, y, centerZ + randomOffsetZ));
             }
         }
 

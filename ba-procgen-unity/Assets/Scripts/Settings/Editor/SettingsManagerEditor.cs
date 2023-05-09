@@ -256,7 +256,7 @@ namespace ProcGen.Settings
             EditorGUILayout.LabelField("Chunk Settings", EditorStyles.boldLabel);
 
             float origgridCellSize = SettingsManager.Instance.ChunkSettings.gridCellSize;
-            SettingsManager.Instance.ChunkSettings.gridCellSize = EditorGUILayout.Slider("Grid Cell Size", SettingsManager.Instance.ChunkSettings.gridCellSize, 0.1f, 2.0f);
+            SettingsManager.Instance.ChunkSettings.gridCellSize = EditorGUILayout.Slider("Grid Cell Size", SettingsManager.Instance.ChunkSettings.gridCellSize, 0.1f, 10.0f);
 
             bool origDrawChunkBounds = SettingsManager.Instance.ChunkSettings.drawChunkBounds;
             SettingsManager.Instance.ChunkSettings.drawChunkBounds = EditorGUILayout.Toggle("Draw Chunk Bounds", SettingsManager.Instance.ChunkSettings.drawChunkBounds);

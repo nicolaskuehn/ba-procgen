@@ -14,7 +14,7 @@ namespace ProcGen.Generation
         private const float BETA_3 = 0.9000000f;
         private const float SQRT_PI = 1.7724539f;
 
-        private const int MAX_PLANTS_IN_GRID_CELL = 10;
+        private const int MAX_PLANTS_IN_GRID_CELL = 50;
 
         // TODO: Add tree struct with (mesh, material, matrices) for multiple tree types
         [SerializeField]
@@ -180,7 +180,7 @@ namespace ProcGen.Generation
         {
             // ... Calculate vegetation based on biome data ... //
             // Calculate height for given position (x, z)
-            float y = SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(centerX, centerZ);
+            // float y = SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(centerX, centerZ);
 
             float PlantCount_ExpVal = Mathf.Lerp(0, MAX_PLANTS_IN_GRID_CELL, cellData.SoilFertility); // TODO: Add influence of height
             float PlantCount_StdDev = Mathf.Exp( -24.0f * ((cellData.Climate - 0.5f) * (cellData.Climate - 0.5f)) );
@@ -196,6 +196,86 @@ namespace ProcGen.Generation
             // Debug.Log($"count: {plantCount} | exp: {PlantCount_ExpVal}, sd: {PlantCount_StdDev}");
 
 
+            // ... Determine spawn locations for plants ... //
+            int d = Mathf.CeilToInt(Mathf.Sqrt(MAX_PLANTS_IN_GRID_CELL));
+
+            Vector2[,] backgroundGrid = new Vector2[d, d];
+            float w = SettingsManager.Instance.ChunkSettings.gridCellSize / d;
+
+            for (int j = 0; j < d; j++)
+            {
+                for (int i = 0; i < d; i++)
+                {
+                    backgroundGrid[i, j] = new Vector2(-99.0f, -99.0f);    // this value is viewed as invalid
+                }
+            }
+
+            const int MAX_ITERATIONS = 100;
+            List<Vector2> foundPositionsWorld = new List<Vector2>();
+
+            for (int i = 0; i < MAX_ITERATIONS; i++)
+            {
+                // Break if all plant positions are found
+                if (foundPositionsWorld.Count >= plantCount) break;
+
+                // Pick random cell of background grid
+                int randIndX = Random.Range(0, d);
+                int randIndZ = Random.Range(0, d);
+
+                // Check if this cell is already occupied
+                if (!(backgroundGrid[randIndX, randIndZ].x < -1.0f || backgroundGrid[randIndX, randIndZ].y < -1.0f)) continue;
+
+                // Generate random position in background grid cell as relative offset in range [-1.0, 1.0]
+                float randOffX = Random.Range(-1.0f, 1.0f);
+                float randOffZ = Random.Range(-1.0f, 1.0f);
+
+                // Save this position in background grid (and found positions list)
+                Vector2 pos = new Vector2(randOffX, randOffZ);
+                backgroundGrid[randIndX, randIndZ] = pos;
+
+                // Convert relative position to world position and save it in found positions list
+                float gridCellHalfSize = 0.5f * SettingsManager.Instance.ChunkSettings.gridCellSize;
+                foundPositionsWorld.Add(new Vector2(
+                        (centerX - gridCellHalfSize) + randIndX * w + 0.5f*w + pos.x * w, 
+                        (centerZ - gridCellHalfSize) + randIndZ * w + 0.5f*w + pos.y * w
+                    )
+                );
+
+                /*
+                float gridCellHalfSize = 0.5f * SettingsManager.Instance.ChunkSettings.gridCellSize;
+
+                float randomX = Random.Range(centerX - gridCellHalfSize, centerX + gridCellHalfSize);
+                float randomZ = Random.Range(centerZ - gridCellHalfSize, centerZ + gridCellHalfSize);
+
+                // Find position in background grid
+                int iX = Mathf.FloorToInt((randomX - (centerX - gridCellHalfSize)) / w);
+                int iZ = Mathf.FloorToInt((randomZ - (centerZ - gridCellHalfSize)) / w);
+
+                // Check if this background grid cell is valid
+                if (iX < 0 || iX > d - 1 || iZ < 0 || iZ > d - 1) continue;         // out of grid bounds
+                if (backgroundGrid[iX, iZ] != Vector2.negativeInfinity) continue;   // already occupied
+
+                // Save found valid position
+                Vector2 pos = new Vector2(randomX, randomZ);
+                backgroundGrid[iX, iZ] = pos;
+                foundPositions.Add(pos);
+                */
+            }
+
+            // Spawn plants at the found positions
+            for (int i = 0; i < foundPositionsWorld.Count; i++)
+            {
+                Vector2 worldPos = foundPositionsWorld[i];
+
+                InstantiateTree(new Vector3(
+                    worldPos.x, 
+                    SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(worldPos.x, worldPos.y), 
+                    worldPos.y)
+                );
+            }
+
+
+            /* // ... OLD VERSION ... //
             // ... Determine spawn locations for plants using Poisson Disc Sampling ... //
             // Create grid
             const float r = 0.1f;
@@ -204,20 +284,19 @@ namespace ProcGen.Generation
 
             int d = Mathf.FloorToInt(SettingsManager.Instance.ChunkSettings.gridCellSize / w);
 
-            int[,] grid = new int[d, d];
+            Vector2[,] grid = new Vector2[d, d];
 
             // Init grid
             for (int z = 0; z < d; z++)
             {
                 for (int x = 0; x < d; x++)
                 {
-                    grid[x, z] = -1;
+                    grid[x, z] = Vector2.negativeInfinity;  // TODO: Check if there is a better way of initializing
                 }
             }
 
             // Select initial sample randomly
-            int sampleIndex = 0;
-            List<int> active = new List<int>();
+            List<Vector2> active = new List<Vector2>();
 
             float gridCellHalfSize = 0.5f * SettingsManager.Instance.ChunkSettings.gridCellSize;
             float randomX = Random.Range(centerX - gridCellHalfSize, centerX + gridCellHalfSize);
@@ -226,14 +305,17 @@ namespace ProcGen.Generation
             int iX = Mathf.FloorToInt(randomX / w);
             int iZ = Mathf.FloorToInt(randomZ / w);
 
-            grid[iX, iZ] = sampleIndex;
-            active.Add(sampleIndex);
-            sampleIndex++;
+            Debug.Log($"[initialSample] iX: {iX}, iZ: {iZ}");
+
+            Vector2 randomPos = new Vector2(randomX, randomZ);
+            grid[iX, iZ] = randomPos;
+            active.Add(randomPos);
 
             // Choose random sample from active list while not empty
             while (active.Count > 0)
             {
                 int randomIndex = Random.Range(0, active.Count);
+                bool foundSample = false;
 
                 for (int i = 0; i < k; i++)
                 {
@@ -242,11 +324,60 @@ namespace ProcGen.Generation
                     float offX = Mathf.Cos(randomAngle) * randomLength;
                     float offZ = Mathf.Sin(randomAngle) * randomLength;
 
-                    // TODO: Continue
+
+                    Vector2 newSample = active[randomIndex] + (new Vector2(offX, offZ));
+
+                    int newSampleIX = Mathf.FloorToInt(newSample.x / w);
+                    int newSampleIZ = Mathf.FloorToInt(newSample.y / w);
+
+                    // Only continue if new sample lays in grid
+                    if (newSampleIX < 0 || newSampleIX > d - 1 || newSampleIZ < 0 || newSampleIZ > d - 1) continue;
+
+                    // Debug.Log($"[newSample] d: {d}, ({newSampleIX},{newSampleIZ})");
+
+                    // Check if newly generated sample is within distance r of existing samples
+                    bool isValid = true;
+                    for (int z = -2; z < 2; z++)
+                    {
+                        for (int x = -2; x < 2; x++)
+                        {
+                            // Check if neighbor lays in grid
+                            int neighborIX = newSampleIX + x;
+                            int neighborIZ = newSampleIZ + z;
+
+                            if (neighborIX < 0 || neighborIX > d - 1 || neighborIZ < 0 || neighborIZ > d - 1) continue;
+
+                            Vector2 neighborSample = grid[neighborIX, neighborIZ];
+
+                            // Check if neighbor is a valid sample
+                            if (neighborSample == Vector2.negativeInfinity) continue;
+
+                            float distance = Vector2.Distance(newSample, neighborSample);
+                            if (distance < r)
+                            {
+                                isValid = false;
+                            }
+                        }
+                    }
+
+                    // Accept new sample if it is valid
+                    if (isValid)
+                    {
+                        foundSample = true;
+                        grid[newSampleIX, newSampleIZ] = newSample;
+                        active.Add(newSample);
+
+                        // break; // TODO: Check if we can break here
+                    }
                 }
 
-            }
+                // Remove sample from active list if no valid sample is found
+                if (!foundSample)
+                    active.RemoveAt(randomIndex);
 
+            
+        }
+        */
 
             // Offset each tree randomly inside it's cell to break the visible grid pattern
             /*
@@ -259,7 +390,7 @@ namespace ProcGen.Generation
             // ... Do plausability check for each plant separately ... //
             // TODO
             // Do not place vegetation below water level
-            if (y < SettingsManager.Instance.MeshSettings.waterLevel) return;
+            // if (y < SettingsManager.Instance.MeshSettings.waterLevel) return;
             // Do not place vegetation above certain height
             // TODO
 

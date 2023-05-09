@@ -54,6 +54,10 @@ namespace ProcGen.Settings
         private ChunkSettings chunkSettings;
         public ChunkSettings ChunkSettings => chunkSettings;
 
+        [SerializeField]
+        private VegetationSettings vegetationSettings;
+        public VegetationSettings VegetationSettings => vegetationSettings;
+
         /*
         [Header("Mesh Settings")]
         // Determines the size (number of tiles/squares) of the mesh of the plane in x- and z-direction
@@ -111,5 +115,16 @@ namespace ProcGen.Settings
         // Can be toggled to visualize the grid (cells) of the chunks
         public bool drawChunkGrid = false;
     } 
+
+
+     [System.Serializable]
+     public class VegetationSettings
+    {
+        // Determines how much plants can be placed inside a grid cell at maximum
+        public int maxPlantsInGridCell = 50;
+
+        // Determines the maximum height a plant is able to grow
+        public float maxPlantGrowHeight = 2.0f;
+    }
 
 }

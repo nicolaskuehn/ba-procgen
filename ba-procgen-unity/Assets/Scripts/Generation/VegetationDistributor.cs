@@ -9,12 +9,11 @@ namespace ProcGen.Generation
     public class VegetationDistributor : MonoBehaviour
     {
         // Constants for approximations of the standard normal integral
+        // TODO: REMOVE
         private const float BETA_1 = -0.0004406f;
         private const float BETA_2 = 0.0418198f;
         private const float BETA_3 = 0.9000000f;
         private const float SQRT_PI = 1.7724539f;
-
-        private const int MAX_PLANTS_IN_GRID_CELL = 50;
 
         // TODO: Add tree struct with (mesh, material, matrices) for multiple tree types
         [SerializeField]
@@ -179,8 +178,7 @@ namespace ProcGen.Generation
         private void DistributeVegetationInGridCell(float centerX, float centerZ, GridCellData cellData)
         {
             // ... Calculate vegetation based on biome data ... //
-            // Calculate height for given position (x, z)
-            // float y = SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(centerX, centerZ);
+            int MAX_PLANTS_IN_GRID_CELL = SettingsManager.Instance.VegetationSettings.maxPlantsInGridCell;
 
             float PlantCount_ExpVal = Mathf.Lerp(0, MAX_PLANTS_IN_GRID_CELL, cellData.SoilFertility); // TODO: Add influence of height
             float PlantCount_StdDev = Mathf.Exp( -24.0f * ((cellData.Climate - 0.5f) * (cellData.Climate - 0.5f)) );
@@ -229,37 +227,31 @@ namespace ProcGen.Generation
                 float randOffX = Random.Range(-1.0f, 1.0f);
                 float randOffZ = Random.Range(-1.0f, 1.0f);
 
-                // Save this position in background grid (and found positions list)
-                Vector2 pos = new Vector2(randOffX, randOffZ);
-                backgroundGrid[randIndX, randIndZ] = pos;
+                // Calculate relative position to world position
+                Vector2 relativePos = new Vector2(randOffX, randOffZ);
 
-                // Convert relative position to world position and save it in found positions list
                 float gridCellHalfSize = 0.5f * SettingsManager.Instance.ChunkSettings.gridCellSize;
-                foundPositionsWorld.Add(new Vector2(
-                        (centerX - gridCellHalfSize) + randIndX * w + 0.5f*w + pos.x * w, 
-                        (centerZ - gridCellHalfSize) + randIndZ * w + 0.5f*w + pos.y * w
-                    )
+                Vector2 worldPos = new Vector2(
+                    (centerX - gridCellHalfSize) + randIndX * w + 0.5f * w + relativePos.x * w,
+                    (centerZ - gridCellHalfSize) + randIndZ * w + 0.5f * w + relativePos.y * w
                 );
 
-                /*
-                float gridCellHalfSize = 0.5f * SettingsManager.Instance.ChunkSettings.gridCellSize;
+                // ... Check plausability rules ... //
+                float height = SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(worldPos.x, worldPos.y);
+                
+                // Do not place vegetation below water level
+                if (height < SettingsManager.Instance.MeshSettings.waterLevel) continue;
 
-                float randomX = Random.Range(centerX - gridCellHalfSize, centerX + gridCellHalfSize);
-                float randomZ = Random.Range(centerZ - gridCellHalfSize, centerZ + gridCellHalfSize);
+                // Do not place vegetation above max growing height
+                if (height > SettingsManager.Instance.VegetationSettings.maxPlantGrowHeight) continue;
 
-                // Find position in background grid
-                int iX = Mathf.FloorToInt((randomX - (centerX - gridCellHalfSize)) / w);
-                int iZ = Mathf.FloorToInt((randomZ - (centerZ - gridCellHalfSize)) / w);
 
-                // Check if this background grid cell is valid
-                if (iX < 0 || iX > d - 1 || iZ < 0 || iZ > d - 1) continue;         // out of grid bounds
-                if (backgroundGrid[iX, iZ] != Vector2.negativeInfinity) continue;   // already occupied
+                // ... Position is valid and plausible ... //
+                // Save relative position in background grid
+                backgroundGrid[randIndX, randIndZ] = relativePos;
 
-                // Save found valid position
-                Vector2 pos = new Vector2(randomX, randomZ);
-                backgroundGrid[iX, iZ] = pos;
-                foundPositions.Add(pos);
-                */
+                // Save world position in found positions list
+                foundPositionsWorld.Add(worldPos);
             }
 
             // Spawn plants at the found positions

@@ -287,6 +287,23 @@ namespace ProcGen.Settings
             // Draw heading
             EditorGUILayout.LabelField("Vegetation Settings", EditorStyles.boldLabel);
 
+            int origMaxPlantsInGridCell = SettingsManager.Instance.VegetationSettings.maxPlantsInGridCell;
+            SettingsManager.Instance.VegetationSettings.maxPlantsInGridCell = EditorGUILayout.IntSlider("Max plants in grid cell", SettingsManager.Instance.VegetationSettings.maxPlantsInGridCell, 1, 100);
+
+            float origMaxPlantGrowHeight = SettingsManager.Instance.VegetationSettings.maxPlantGrowHeight;
+            SettingsManager.Instance.VegetationSettings.maxPlantGrowHeight = EditorGUILayout.Slider("Max plant grow height", SettingsManager.Instance.VegetationSettings.maxPlantGrowHeight, 0.0f, 10.0f);
+
+            bool redistributeVegetation = false;
+
+            if (origMaxPlantsInGridCell != SettingsManager.Instance.VegetationSettings.maxPlantsInGridCell)
+                redistributeVegetation = true;
+
+            if (origMaxPlantGrowHeight != SettingsManager.Instance.VegetationSettings.maxPlantGrowHeight)
+                redistributeVegetation = true;
+
+            if (redistributeVegetation)
+                vegetationDistributor.DistributeVegetationOnTerrain();
+
             if (!SettingsManager.Instance.MeshSettings.autoUpdate)
             {
                 if (GUILayout.Button("Distribute Vegetation"))

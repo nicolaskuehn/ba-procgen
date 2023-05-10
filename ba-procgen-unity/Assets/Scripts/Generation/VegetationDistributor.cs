@@ -22,8 +22,12 @@ namespace ProcGen.Generation
         [SerializeField]
         private Mesh treeMesh;
         [SerializeField]
-        private Material treeMaterial;
-        private List<Matrix4x4> treeMatrices = new List<Matrix4x4>();
+        private Material broadleafTreeMaterial;
+        [SerializeField]
+        private Material pineTreeMaterial;
+
+        private List<Matrix4x4> broadleafTreeMatrices = new List<Matrix4x4>();
+        private List<Matrix4x4> pineTreeMatrices = new List<Matrix4x4>();
 
         [SerializeField]
         private Texture2D biomesTexture;
@@ -39,7 +43,7 @@ namespace ProcGen.Generation
         private void Update()
         {
             // Render vegetation
-            if (treeMatrices.Count > 0)
+            if (broadleafTreeMatrices.Count > 0 || pineTreeMatrices.Count > 0)
                 RenderTrees();
         }
 
@@ -55,7 +59,7 @@ namespace ProcGen.Generation
         public void ResetVegetationState()
         {
             // Clear instanced rendering queue (of model matrices)
-            treeMatrices.Clear();
+            broadleafTreeMatrices.Clear();
 
             // Reset grid cell state (especially HasModelPlaced property)
             List<Transform> terrainChunks = terrainGO.transform.Cast<Transform>().ToList();
@@ -276,13 +280,16 @@ namespace ProcGen.Generation
 
                 Vector3 scale = new Vector3(baseScale, baseScale + randomHeightOff, baseScale);
 
+                float randomTypeFactor = Random.value;
+
                 InstantiateTree(
                     new Vector3(
                         worldPos.x,
                         terrainHeight, 
                         worldPos.y
                     ),
-                    scale
+                    scale,
+                    randomTypeFactor < 0.5f ? "broadleaf" : "pine"
                 );
             }
 
@@ -410,48 +417,67 @@ namespace ProcGen.Generation
             // InstantiateTree(new Vector3(centerX + randomOffsetX, y, centerZ + randomOffsetZ));
         }
 
-        private void InstantiateTree(Vector3 pos, Vector3 scale)
+        private void InstantiateTree(Vector3 pos, Vector3 scale, string type)
         {
             // Add tree to instanced rendering queue
-            treeMatrices.Add(
-                Matrix4x4.TRS(
-                    pos,                                                        // Translation
-                    Quaternion.Euler(0.0f, Random.Range(0.0f, 360.0f), 0.0f),   // Rotation
-                    scale                                                       // Scale
-                )
-            );
+            if (type == "broadleaf")
+            {
+                broadleafTreeMatrices.Add(
+                                Matrix4x4.TRS(
+                                    pos,                                                        // Translation
+                                    Quaternion.Euler(0.0f, Random.Range(0.0f, 360.0f), 0.0f),   // Rotation
+                                    scale                                                       // Scale
+                                )
+                            );
+            }
+            else if (type == "pine")
+            {
+                pineTreeMatrices.Add(
+                                Matrix4x4.TRS(
+                                    pos,                                                        // Translation
+                                    Quaternion.Euler(0.0f, Random.Range(0.0f, 360.0f), 0.0f),   // Rotation
+                                    scale                                                       // Scale
+                                )
+                            );
+            }
         }
 
         public void RenderTrees()
         {
+            RenderTreeType(broadleafTreeMaterial, broadleafTreeMatrices);
+            RenderTreeType(pineTreeMaterial, pineTreeMatrices);
+        }
+
+        public void RenderTreeType(Material material, List<Matrix4x4> matrices)
+        {
             // Check if trees can be rendered in a single instanced draw call
-            if (treeMatrices.Count <= 1023)
+            if (matrices.Count <= 1023)
             {
                 Graphics.DrawMeshInstanced(
                     treeMesh,                   // mesh
                     0,                          // submeshIndex
-                    treeMaterial,               // material
-                    treeMatrices.ToArray(),     // matrices
-                    treeMatrices.Count          // count
+                    material,               // material
+                    matrices.ToArray(),     // matrices
+                    matrices.Count          // count
                 );
 
                 return;
             }
 
             // Otherwise draw meshes instanced in batches of 1023 (which is the max count)
-            for (int i = 0; i < Mathf.CeilToInt((float) treeMatrices.Count / 1023); i++)
+            for (int i = 0; i < Mathf.CeilToInt((float)matrices.Count / 1023); i++)
             {
                 int startIndex = i * 1023;
-                int count = Mathf.Min(treeMatrices.Count - startIndex, 1023);
+                int count = Mathf.Min(broadleafTreeMatrices.Count - startIndex, 1023);
 
                 //Debug.Log($"{treeMatrices.Count} - {startIndex} = {count}");
 
-                Matrix4x4[] currentBatchTreeMatrices = treeMatrices.GetRange(startIndex, count).ToArray();
+                Matrix4x4[] currentBatchTreeMatrices = matrices.GetRange(startIndex, count).ToArray();
 
                 Graphics.DrawMeshInstanced(
                     treeMesh,                   // mesh
                     0,                          // submeshIndex
-                    treeMaterial,               // material
+                    material,                   // material
                     currentBatchTreeMatrices,   // matrices
                     count                       // count
                 );

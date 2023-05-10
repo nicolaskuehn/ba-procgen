@@ -1,4 +1,5 @@
 using ProcGen.Settings;
+using ProcGen.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -14,6 +15,8 @@ namespace ProcGen.Generation
         private const float BETA_2 = 0.0418198f;
         private const float BETA_3 = 0.9000000f;
         private const float SQRT_PI = 1.7724539f;
+
+        const float BASE_MODEL_SCALE = 0.03f;
 
         // TODO: Add tree struct with (mesh, material, matrices) for multiple tree types
         [SerializeField]
@@ -258,11 +261,28 @@ namespace ProcGen.Generation
             for (int i = 0; i < foundPositionsWorld.Count; i++)
             {
                 Vector2 worldPos = foundPositionsWorld[i];
+                float terrainHeight = SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(worldPos.x, worldPos.y);
 
-                InstantiateTree(new Vector3(
-                    worldPos.x, 
-                    SettingsManager.Instance.HeightfieldCompositor.GetComposedHeight(worldPos.x, worldPos.y), 
-                    worldPos.y)
+                // Calculate scale of plant based on height (and small random factor)
+                float randomHeightOff = Random.Range(0.0f, 0.01f);
+
+                float baseScale = Mathf.InverseLerp(
+                    SettingsManager.Instance.VegetationSettings.maxPlantGrowHeight,
+                    SettingsManager.Instance.MeshSettings.waterLevel,
+                    terrainHeight
+                );
+
+                baseScale = MathUtils.Map(0.0f, 1.0f, 0.8f, 1.0f, baseScale) * BASE_MODEL_SCALE;
+
+                Vector3 scale = new Vector3(baseScale, baseScale + randomHeightOff, baseScale);
+
+                InstantiateTree(
+                    new Vector3(
+                        worldPos.x,
+                        terrainHeight, 
+                        worldPos.y
+                    ),
+                    scale
                 );
             }
 
@@ -390,14 +410,14 @@ namespace ProcGen.Generation
             // InstantiateTree(new Vector3(centerX + randomOffsetX, y, centerZ + randomOffsetZ));
         }
 
-        private void InstantiateTree(Vector3 pos)
+        private void InstantiateTree(Vector3 pos, Vector3 scale)
         {
             // Add tree to instanced rendering queue
             treeMatrices.Add(
                 Matrix4x4.TRS(
                     pos,                                                        // Translation
                     Quaternion.Euler(0.0f, Random.Range(0.0f, 360.0f), 0.0f),   // Rotation
-                    Vector3.one * 0.03f                                         // Scale
+                    scale                                                       // Scale
                 )
             );
         }

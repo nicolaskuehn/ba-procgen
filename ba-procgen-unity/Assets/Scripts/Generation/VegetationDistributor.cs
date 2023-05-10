@@ -60,15 +60,17 @@ namespace ProcGen.Generation
         {
             // Clear instanced rendering queue (of model matrices)
             broadleafTreeMatrices.Clear();
+            pineTreeMatrices.Clear();
 
             // Reset grid cell state (especially HasModelPlaced property)
+            /*
             List<Transform> terrainChunks = terrainGO.transform.Cast<Transform>().ToList();
             foreach (Transform chunkTransform in terrainChunks)
             {
                 Chunk chunk = chunkTransform.GetComponent<Chunk>();
 
                 // Iterate over all grid cells in tile
-                /*
+                
                 for (int z = 0; z < chunk.GridCellCount1D; z++)
                 {
                     for (int x = 0; x < chunk.GridCellCount1D; x++)
@@ -77,8 +79,9 @@ namespace ProcGen.Generation
                         chunk.GetGridCellDataAtCoords(x, z).HasModelPlaced = false;
                     }
                 }
-                */
+                
             }
+            */
         }
 
         private void LoadBiomeData()    // TODO: Call this method at the "right" place/moment
@@ -280,7 +283,7 @@ namespace ProcGen.Generation
 
                 Vector3 scale = new Vector3(baseScale, baseScale + randomHeightOff, baseScale);
 
-                float randomTypeFactor = Random.value;
+                float randomTypeFactor = Mathf.Clamp01(cellData.Climate);
 
                 InstantiateTree(
                     new Vector3(
@@ -289,7 +292,7 @@ namespace ProcGen.Generation
                         worldPos.y
                     ),
                     scale,
-                    randomTypeFactor < 0.5f ? "broadleaf" : "pine"
+                    randomTypeFactor < 0.3f ? "broadleaf" : "pine"
                 );
             }
 
@@ -468,7 +471,7 @@ namespace ProcGen.Generation
             for (int i = 0; i < Mathf.CeilToInt((float)matrices.Count / 1023); i++)
             {
                 int startIndex = i * 1023;
-                int count = Mathf.Min(broadleafTreeMatrices.Count - startIndex, 1023);
+                int count = Mathf.Min(matrices.Count - startIndex, 1023);
 
                 //Debug.Log($"{treeMatrices.Count} - {startIndex} = {count}");
 

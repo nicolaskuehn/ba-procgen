@@ -18,7 +18,15 @@ namespace ProcGen.Generation
 
         const float BASE_MODEL_SCALE = 0.03f;
 
-        // TODO: Add tree struct with (mesh, material, matrices) for multiple tree types
+        [SerializeField]
+        private Mesh treeMesh;
+        [SerializeField]
+        private TreeContainer hardwoodTrees;
+        [SerializeField]
+        private TreeContainer softwoodTrees;
+
+        
+        /*
         [SerializeField]
         private Mesh treeMesh;
         [SerializeField]
@@ -28,6 +36,8 @@ namespace ProcGen.Generation
 
         private List<Matrix4x4> broadleafTreeMatrices = new List<Matrix4x4>();
         private List<Matrix4x4> pineTreeMatrices = new List<Matrix4x4>();
+        */
+
 
         [SerializeField]
         private Texture2D biomesTexture;
@@ -43,7 +53,7 @@ namespace ProcGen.Generation
         private void Update()
         {
             // Render vegetation
-            if (broadleafTreeMatrices.Count > 0 || pineTreeMatrices.Count > 0)
+            if (hardwoodTrees.InstanceCount > 0 || softwoodTrees.InstanceCount > 0)
                 RenderTrees();
         }
 
@@ -59,8 +69,8 @@ namespace ProcGen.Generation
         public void ResetVegetationState()
         {
             // Clear instanced rendering queue (of model matrices)
-            broadleafTreeMatrices.Clear();
-            pineTreeMatrices.Clear();
+            hardwoodTrees.ClearInstances();
+            softwoodTrees.ClearInstances();
 
             // Reset grid cell state (especially HasModelPlaced property)
             /*
@@ -425,7 +435,7 @@ namespace ProcGen.Generation
             // Add tree to instanced rendering queue
             if (type == "broadleaf")
             {
-                broadleafTreeMatrices.Add(
+                hardwoodTrees.AddInstance(
                                 Matrix4x4.TRS(
                                     pos,                                                        // Translation
                                     Quaternion.Euler(0.0f, Random.Range(0.0f, 360.0f), 0.0f),   // Rotation
@@ -435,7 +445,7 @@ namespace ProcGen.Generation
             }
             else if (type == "pine")
             {
-                pineTreeMatrices.Add(
+                softwoodTrees.AddInstance(
                                 Matrix4x4.TRS(
                                     pos,                                                        // Translation
                                     Quaternion.Euler(0.0f, Random.Range(0.0f, 360.0f), 0.0f),   // Rotation
@@ -447,8 +457,8 @@ namespace ProcGen.Generation
 
         public void RenderTrees()
         {
-            RenderTreeType(broadleafTreeMaterial, broadleafTreeMatrices);
-            RenderTreeType(pineTreeMaterial, pineTreeMatrices);
+            RenderTreeType(hardwoodTrees.material, hardwoodTrees.InstanceMatrices);
+            RenderTreeType(softwoodTrees.material, softwoodTrees.InstanceMatrices);
         }
 
         public void RenderTreeType(Material material, List<Matrix4x4> matrices)
@@ -486,5 +496,29 @@ namespace ProcGen.Generation
                 );
             }
         }
+    }
+
+
+    // Lists all known tree types
+    enum TreeType
+    {
+        Hardwood,
+        Softwood
+    }
+
+    // Contains all needed data of one type of trees (needed for instanced rendering)
+    [System.Serializable]
+    class TreeContainer
+    {
+        public TreeType treeType;
+        public Material material; // TODO: allow multiple materials to give slight variation inside of one forest type
+        private List<Matrix4x4> matrices = new List<Matrix4x4>();
+
+        public List<Matrix4x4> InstanceMatrices => matrices;
+        public int InstanceCount => matrices.Count;
+
+        public void ClearInstances() => matrices.Clear();
+
+        public void AddInstance(Matrix4x4 instanceMatrix) => matrices.Add(instanceMatrix);
     }
 }
